@@ -1,77 +1,42 @@
 const connect = require("../db/connect");
+const validateUser = require("../services/validateUser");
+const validateCpf = require("../services/validateCpf");
+const validateEmail = require("../services/validateEmail");
+
 module.exports = class userController {
   static async createUser(req, res) {
     const { cpf, nome, telefone, email, senha } = req.body;
 
-    if (!cpf || !nome || !telefone || !email || !senha) {
-      return res
-        .status(400)
-        .json({ error: "Todos os campos devem ser preenchidos" });
-    } else if (isNaN(cpf) || cpf.length !== 11) {
-      return res.status(400).json({
-        error: "CPF inválido. Deve conter exatamente 11 dígitos numéricos",
+    // Valida os campos básicos
+    const validationError = validateUser({ cpf, email, senha, nome, telefone });
+    if (validationError) {
+      return res.status(400).json(validationError);
+    }
+
+    try {
+      // Verifica se CPF já existe
+      const cpfError = await validateCpf(cpf);
+      if (cpfError) return res.status(400).json(cpfError);
+
+      // Verifica se Email já existe
+      const emailError = await validateEmail(email);
+      if (emailError) return res.status(400).json(emailError);
+
+      // Insere o usuário no banco de dados
+      const queryInsert = `INSERT INTO usuario (cpf, nome, telefone, email, senha) VALUES (?, ?, ?, ?, ?)`;
+      const values = [cpf, nome, telefone, email, senha];
+
+      connect.query(queryInsert, values, (err) => {
+        if (err) {
+          console.error(err);
+          return res.status(500).json({ error: "Erro ao cadastrar usuário" });
+        }
+        return res.status(201).json({ message: "Usuário cadastrado com sucesso" });
       });
-    } else if (!email.includes("@")) {
-      return res.status(400).json({ error: "Email inválido. Deve conter @" });
-    } else {
-      // Verificar se o CPF já está vinculado a outro usuário
-      const queryCPF = `SELECT * FROM usuario WHERE cpf = '${cpf}'`;
 
-      try {
-        // Executando a query para verificar o CPF
-        connect.query(queryCPF, function (err, results) {
-          if (err) {
-            console.error(err);
-            return res.status(500).json({ error: "Erro interno do servidor" });
-          }
-          if (results.length > 0) {
-            //Resposta para o usuario de cpf ja cadastrado
-            return res
-              .status(400)
-              .json({ error: "O CPF já está vinculado a outro usuário" });
-          } else {
-            // Se o CPF não estiver vinculado, verifica o email
-            const queryEmail = `SELECT * FROM usuario WHERE email = '${email}'`;
-
-            connect.query(queryEmail, function (err, results) {
-              if (err) {
-                console.error(err);
-                return res.status(500).json({ error: "Erro interno do servidor" });
-              }
-              if (results.length > 0) {
-                //Resposta para o usuario de email ja cadastrado
-                return res
-                  .status(400)
-                  .json({ error: "O Email já está vinculado a outro usuário" });
-              } else {
-                // Se CPF e email não estão vinculados, insere o novo usuário
-                const queryInsert = `INSERT INTO usuario (cpf, nome, telefone, email, senha) VALUES (
-                  '${cpf}',
-                  '${nome}',
-                  '${telefone}',
-                  '${email}',
-                  '${senha}'
-                )`;
-                connect.query(queryInsert, function (err) {
-                  if (err) {
-                    console.error(err);
-                    return res
-                      .status(500)
-                      .json({ error: "Erro ao cadastrar usuário" });
-                  }
-                  return res
-                    .status(201)
-                    .json({ message: "Usuário cadastrado com sucesso" });
-                });
-              }
-            });
-          }
-        });
-      }// Fechamento do Try
-      catch (error) {
-        console.error(error);
-        res.status(500).json({ error: "Erro interno do servidor" });
-      }// Fechamento do catch
+    } catch (error) {
+      console.error(error);
+      return res.status(500).json({ error: "Erro interno do servidor" });
     }
   }
 
@@ -146,30 +111,38 @@ static async getAllUsers(req, res) {
 
 
 static async updateUser(req, res) {
-  const { id_usuario, nome, telefone, email, senha } = req.body;
+  const { id_usuario, nome, telefone, email, senha, cpf } = req.body;
 
   if (!id_usuario || !nome || !telefone || !email || !senha) {
     return res.status(400).json({ error: "Todos os campos devem ser preenchidos" });
   }
 
-  const queryUpdate = `UPDATE usuario SET nome=?, telefone=?, email=?, senha=? WHERE id_usuario = ?`;
-  const valuesUpdate = [nome, telefone, email, senha, id_usuario];
-
   try {
+    // Validar se CPF já está cadastrado para outro usuário
+    const cpfError = await validateCpf(cpf, id_usuario);
+    if (cpfError) return res.status(400).json(cpfError);
+
+    // Validar se Email já está cadastrado para outro usuário
+    const emailError = await validateEmail(email, id_usuario);
+    if (emailError) return res.status(400).json(emailError);
+
+    // Atualizar os dados no banco
+    const queryUpdate = `UPDATE usuario SET nome=?, telefone=?, email=?, senha=? WHERE id_usuario = ?`;
+    const valuesUpdate = [nome, telefone, email, senha, id_usuario];
+
     connect.query(queryUpdate, valuesUpdate, (err, results) => {
       if (err) {
         if (err.code === "ER_DUP_ENTRY") {
-          return res
-            .status(400)
-            .json({ error: "Email já cadastrado por outro usuário" });
+          return res.status(400).json({ error: "Email ou CPF já cadastrado por outro usuário" });
         }
         console.error(err);
         return res.status(500).json({ error: "Erro interno do servidor" });
       }
-
+    
       if (results.affectedRows === 0) {
-        return res.status(404).json({ message: "Usuário não encontrado" });
+        return res.status(404).json({ error: "Nenhum dado foi alterado. Verifique se o ID existe ou se os valores enviados são diferentes dos já cadastrados." });
       }
+    
       return res.status(200).json({ message: "Usuário atualizado com sucesso" });
     });
   } catch (error) {
