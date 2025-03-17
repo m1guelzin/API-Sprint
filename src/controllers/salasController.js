@@ -4,15 +4,15 @@ module.exports = class salasController {
   
   // Criar uma nova sala
   static async createSala(req, res) {
-    const { nome_da_sala, capacidade, localizacao, disponibilidade, equipamentos } = req.body;
+    const { nome_da_sala, capacidade, localizacao, equipamentos } = req.body;
 
-    if (!nome_da_sala || !capacidade || !localizacao || disponibilidade === undefined || !equipamentos) {
+    if (!nome_da_sala || !capacidade || !localizacao || !equipamentos) {
         return res.status(400).json({ error: "Todos os campos obrigatórios devem ser preenchidos" });
     }
 
-    const queryCheck = `SELECT * FROM salas WHERE nome_da_sala = ?`;
-    const queryInsert = `INSERT INTO salas (nome_da_sala, capacidade, localizacao, disponibilidade, equipamentos) VALUES (?, ?, ?, ?, ?)`;
-    const values = [nome_da_sala, capacidade, localizacao, disponibilidade, equipamentos];
+    const queryCheck = "SELECT * FROM salas WHERE nome_da_sala = ?";
+    const queryInsert = "INSERT INTO salas (nome_da_sala, capacidade, localizacao, equipamentos) VALUES (?, ?, ?, ?)";
+    const values = [nome_da_sala, capacidade, localizacao, equipamentos];
 
     try {
         // Verificar se já existe uma sala com o mesmo nome
@@ -30,7 +30,7 @@ module.exports = class salasController {
             connect.query(queryInsert, values, function (err) {
                 if (err) {
                     console.error(err);
-                    return res.status(500).json({ error: "Erro ao cadastrar a sala" });
+                    return res.status(500).json({ error: "Erro ao cadastrar a sala, Verifique os dados" });
                 }
                 return res.status(201).json({ message: "Sala cadastrada com sucesso" });
             });
@@ -39,11 +39,11 @@ module.exports = class salasController {
         console.error(error);
         return res.status(500).json({ error: "Erro interno do servidor" });
     }
-}
+  }
 
   // Listar todas as salas
   static async getAllSalas(req, res) {
-    const query = `SELECT * FROM salas`;
+    const query = "SELECT * FROM salas";
 
     try {
       connect.query(query, function (err, results) {
@@ -61,15 +61,15 @@ module.exports = class salasController {
 
   // Atualizar uma sala
   static async updateSala(req, res) {
-    const { id_salas, nome_da_sala, capacidade, localizacao, disponibilidade, equipamentos } = req.body;
+    const { id_salas, nome_da_sala, capacidade, localizacao, equipamentos } = req.body;
   
     // Verificar campos obrigatórios
-    if (!id_salas || !nome_da_sala || !capacidade || !localizacao || disponibilidade === undefined) {
+    if (!id_salas || !nome_da_sala || !capacidade || !localizacao) {
       return res.status(400).json({ error: "Todos os campos obrigatórios devem ser preenchidos" });
     }
   
     // Consulta para verificar se já existe outra sala com o mesmo nome
-    const checkQuery = `SELECT * FROM salas WHERE nome_da_sala = ? AND id_salas != ?`;
+    const checkQuery = "SELECT * FROM salas WHERE nome_da_sala = ? AND id_salas != ?";
     try {
       connect.query(checkQuery, [nome_da_sala, id_salas], (err, results) => {
         if (err) {
@@ -83,8 +83,8 @@ module.exports = class salasController {
         }
   
         // Atualização da sala
-        const queryUpdate = `UPDATE salas SET nome_da_sala=?, capacidade=?, localizacao=?, disponibilidade=?, equipamentos=? WHERE id_salas = ?`;
-        const values = [nome_da_sala, capacidade, localizacao, disponibilidade, equipamentos, id_salas];
+        const queryUpdate = "UPDATE salas SET nome_da_sala=?, capacidade=?, localizacao=?, equipamentos=? WHERE id_salas = ?";
+        const values = [nome_da_sala, capacidade, localizacao, equipamentos, id_salas];
   
         connect.query(queryUpdate, values, function (err, results) {
           if (err) {
@@ -108,8 +108,8 @@ module.exports = class salasController {
     const salaId = req.params.id;
   
     // Query para verificar se existem reservas associadas à sala
-    const queryCheckReservas = `SELECT COUNT(*) AS quantidade_reservas_na_sala FROM reservas WHERE fkid_salas = ?`;
-    const queryDelete = `DELETE FROM salas WHERE id_salas = ?`;
+    const queryCheckReservas = "SELECT COUNT(*) AS quantidade_reservas_na_sala FROM reservas WHERE fkid_salas = ?";
+    const queryDelete = "DELETE FROM salas WHERE id_salas = ?";
   
     try {
       // Verifica se há reservas associadas à sala
@@ -119,8 +119,8 @@ module.exports = class salasController {
           return res.status(500).json({ error: "Erro ao verificar reservas associadas à sala" });
         }
   
-        const { reservaCount } = results[0];
-        if (reservaCount > 0) {
+        const { quantidade_reservas_na_sala } = results[0];
+        if (quantidade_reservas_na_sala > 0) {
           return res.status(400).json({ error: "Não é possível excluir a sala, pois ela possui reservas associadas" });
         }
   

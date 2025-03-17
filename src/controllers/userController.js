@@ -113,7 +113,8 @@ static async getAllUsers(req, res) {
 static async updateUser(req, res) {
   const { id_usuario, nome, telefone, email, senha, cpf } = req.body;
 
-  if (!id_usuario || !nome || !telefone || !email || !senha) {
+  // Verificar se todos os campos necessários foram preenchidos
+  if (!id_usuario || !nome || !telefone || !email || !senha || !cpf) {
     return res.status(400).json({ error: "Todos os campos devem ser preenchidos" });
   }
 
@@ -127,22 +128,16 @@ static async updateUser(req, res) {
     if (emailError) return res.status(400).json(emailError);
 
     // Atualizar os dados no banco
-    const queryUpdate = `UPDATE usuario SET nome=?, telefone=?, email=?, senha=? WHERE id_usuario = ?`;
-    const valuesUpdate = [nome, telefone, email, senha, id_usuario];
+    const queryUpdate = `UPDATE usuario SET nome=?, telefone=?, email=?, senha=?, cpf=? WHERE id_usuario = ?`;
+    const valuesUpdate = [nome, telefone, email, senha, cpf, id_usuario]; // A posição estava incorreta antes
 
     connect.query(queryUpdate, valuesUpdate, (err, results) => {
+      // Verificação de erro na execução da consulta
       if (err) {
-        if (err.code === "ER_DUP_ENTRY") {
-          return res.status(400).json({ error: "Email ou CPF já cadastrado por outro usuário" });
-        }
         console.error(err);
-        return res.status(500).json({ error: "Erro interno do servidor" });
+        return res.status(500).json({ error: "Erro ao atualizar usuário" });
       }
-    
-      if (results.affectedRows === 0) {
-        return res.status(404).json({ error: "Nenhum dado foi alterado. Verifique se o ID existe ou se os valores enviados são diferentes dos já cadastrados." });
-      }
-    
+
       return res.status(200).json({ message: "Usuário atualizado com sucesso" });
     });
   } catch (error) {
@@ -150,6 +145,7 @@ static async updateUser(req, res) {
     return res.status(500).json({ error: "Erro interno do servidor" });
   }
 }
+
 
 static async deleteUser(req, res) {
   const userId = req.params.id;
@@ -198,15 +194,6 @@ static async getUserById(req, res) {
       return res.status(404).json({ error: "Usuário não encontrado" });
     }
 
-    // Supondo que você tenha reservas relacionadas ao usuário
-    const user = results[0];
-    const queryReservas = `SELECT * FROM usuario WHERE id_usuario = ?`;
-
-    connect.query(queryReservas, [userId], function (err, reservas) {
-      if (err) {
-        console.error("Erro ao buscar reservas:", err);
-        return res.status(500).json({ error: "Erro interno ao buscar reservas" });
-      }
 
       return res.status(200).json({
         user: {
@@ -218,10 +205,7 @@ static async getUserById(req, res) {
         },
       });
     });
-  });
-}
-
-
+  };
 };
 
 
