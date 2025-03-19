@@ -1,143 +1,99 @@
 const connect = require("../db/connect");
+const validateReserva = require("../services/validateReserva");
 
 module.exports = class reservaController {
   static async createReserva(req, res) {
-  const { id_usuario, fkid_salas, data_hora, duracao } = req.body;
-
-  // Verificar se todos os campos obrigatórios foram preenchidos
-  if (!id_usuario || !fkid_salas || !data_hora || !duracao) {
-    return res.status(400).json({ error: "Todos os campos devem ser preenchidos" });
-  }
-
-  // Verificar se o usuário existe
-  const queryUsuario = "SELECT * FROM usuario WHERE id_usuario = ?";
-  connect.query(queryUsuario, [id_usuario], function (err, usuario) {
-    if (err) {
-      console.error("Erro ao verificar usuário: ", err);
-      return res.status(500).json({ error: "Erro ao verificar o usuário" });
+    const { id_usuario, fkid_salas, data_reserva, horario_inicio, horario_fim } = req.body;
+  
+    // Criar as datas completas para o início e o fim
+    const dataInicio = new Date(`${data_reserva}T${horario_inicio}`);
+    const dataFim = new Date(`${data_reserva}T${horario_fim}`);
+  
+    // Verificar se as datas são válidas
+    if (isNaN(dataInicio.getTime()) || isNaN(dataFim.getTime())) {
+      return res.status(400).json({ error: "Data ou hora inválida" });
     }
-
-    if (usuario.length === 0) {
-      return res.status(404).json({ error: "Usuário não encontrado" });
+  
+    // Extrair data e hora separadas de datahora_inicio e datahora_fim
+    const data_reserva_formatada = dataInicio.toISOString().split("T")[0];  // Data (YYYY-MM-DD)
+    const horario_inicio_formatado = dataInicio.toISOString().split("T")[1].split(".")[0];  // Hora no formato HH:mm:ss
+    const horario_fim_formatado = dataFim.toISOString().split("T")[1].split(".")[0];  // Hora no formato HH:mm:ss
+  
+    // Validação dos campos
+    const validationError = await validateReserva.validateReserva({
+      fkid_usuario: id_usuario,  // ID do usuário
+      fkid_salas,                // ID da sala
+      data_reserva: data_reserva_formatada, // Data da reserva
+      horario_inicio: horario_inicio_formatado,  // Hora de início
+      horario_fim: horario_fim_formatado,  // Hora de término
+    });
+  
+    if (validationError) {
+      return res.status(400).json(validationError);
     }
-
-    // Verificar se a sala existe
-    const querySala = "SELECT * FROM salas WHERE id_salas = ?";
-    connect.query(querySala, [fkid_salas], function (err, sala) {
-      if (err) {
-        console.error("Erro ao verificar sala: ", err);
-        return res.status(500).json({ error: "Erro ao verificar a sala" });
+  
+    try {
+      // Verifica se o usuário existe
+      const userExists = await validateReserva.checkUserExists(id_usuario);
+      if (userExists) {
+        return res.status(404).json({ error: "Usuário não encontrado" });
       }
-
-      if (sala.length === 0) {
+  
+      // Verifica se a sala existe
+      const salaExists = await validateReserva.checkSalaExists(fkid_salas);
+      if (!salaExists) {
         return res.status(404).json({ error: "Sala não encontrada" });
       }
-
-      // Verificar se a sala está disponível (disponibilidade = 1)
-      if (sala[0].disponibilidade !== 1) {
-        return res.status(400).json({ error: "A sala selecionada não está disponível" });
-      }
-      
-      // Ajustando o fuso horário para -3 (Brasil)
-      const inicio = new Date(data_hora);
-      inicio.setHours(inicio.getHours() - 3); // Subtraindo 3 horas
-
-      const dataFormatada = inicio.toISOString().split("T")[0]; // "2024-12-01"
-      const horaFormatada = inicio.toISOString().split("T")[1].split(".")[0]; // "19:30:00"
-      const dataHoraFormatada = `${dataFormatada} ${horaFormatada}`;
-
-      // Validação: não permitir reserva para dias anteriores ao atual
-      const agora = new Date(); // Data e hora atual
-      agora.setHours(agora.getHours() - 3); // Ajusta para o fuso horário -3
-
-      if (inicio < agora) {
-        return res
-          .status(400)
-          .json({ error: "Não é permitido fazer reservas em dias anteriores ao atual." });
-      }
-
-      // Verificação da duração máxima de 1 hora
-      const [duracaoHoras, duracaoMinutos, duracaoSegundos] = duracao
-        .split(":")
-        .map(Number);
-      
-      // Calcular a duração total em minutos
-      const duracaoTotalMinutos = duracaoHoras * 60 + duracaoMinutos + (duracaoSegundos ? duracaoSegundos / 60 : 0);
-      
-      // Se a duração for maior que 60 minutos (1 hora)
-      if (duracaoTotalMinutos > 60) {
-        return res.status(400).json({ error: "A duração máxima da reserva é de 1 hora." });
-      }
-
-      // Cálculo do horário de término
-      const duracaoMs =
-        ((duracaoHoras * 60 + duracaoMinutos) * 60 + (duracaoSegundos || 0)) * 1000; //obter milissegundos
-      const fim = new Date(inicio.getTime() + duracaoMs);
-
-      // Verificando se há conflito de horário para a mesma sala
-      const queryConflito = `
-        SELECT * FROM reservas
-        WHERE fkid_salas = ? 
-        AND (
-          (? >= data_hora AND ? <= DATE_ADD(data_hora, INTERVAL TIME_TO_SEC(duracao) SECOND)) OR
-          (? >= data_hora AND ? <= DATE_ADD(data_hora, INTERVAL TIME_TO_SEC(duracao) SECOND)) OR 
-          (data_hora >= ? AND data_hora < ?))`;
-
-      const valuesConflito = [
-        fkid_salas,
-        dataHoraFormatada, // Início da nova reserva
-        dataHoraFormatada,
-        fim.toISOString().replace("T", " ").split(".")[0], // Término da nova reserva
-        fim.toISOString().replace("T", " ").split(".")[0], dataHoraFormatada,
-        fim.toISOString().replace("T", " ").split(".")[0],
-      ];
-
-      connect.query(queryConflito, valuesConflito, (err, resultadosConflitos) => {
-        if (err) {
-          console.error("Erro ao verificar conflitos: ", err);
-          return res.status(500).json({ error: "Erro ao verificar conflitos" });
-        }
-
-        // Se houver conflitos de horário, retorna erro
-        if (resultadosConflitos.length > 0) {
-          return res.status(409).json({
-            error: "Conflito de horários para a sala selecionada",
-          });
-        }
-
-        // Se não houver conflitos, realiza a inserção da reserva
-        const queryInsert = `
-          INSERT INTO reservas (fkid_usuario, fkid_salas, data_hora, duracao)
-          VALUES (?, ?, ?, ?)
-        `;
-        const valuesInsert = [
-          id_usuario,
-          fkid_salas,
-          dataHoraFormatada,
-          duracao,
-        ];
-
-        connect.query(queryInsert, valuesInsert, (err, result) => {
-          if (err) {
-            console.error("Erro ao criar reserva: ", err);
-            return res.status(500).json({ error: "Erro ao criar reserva" });
-          }
-
-          return res.status(201).json({
-            message: "Reserva criada com sucesso",
-            reservaId: result.insertId,
-          });
+  
+      // Verifica conflitos de horário para a sala
+      const conflitos = await validateReserva.checkConflitoHorario(fkid_salas, dataInicio, dataFim);
+      if (conflitos.length > 0) {
+        const reservasOrdenadas = conflitos.sort(
+          (a, b) => new Date(a.datahora_fim) - new Date(b.datahora_fim)
+        );
+        const proximoHorarioInicio = new Date(reservasOrdenadas[0].datahora_fim);
+        proximoHorarioInicio.setHours(proximoHorarioInicio.getHours() - 3);  // Ajuste para a hora de intervalo
+        const proximoHorarioFim = new Date(proximoHorarioInicio.getTime() + 50 * 60 * 1000);  // Duração de 50 minutos
+        return res.status(400).json({
+          error: `A sala já está reservada neste horário. O próximo horário disponível é de ${proximoHorarioInicio
+            .toISOString()
+            .replace("T", " ")
+            .substring(0, 19)} até ${proximoHorarioFim
+            .toISOString()
+            .replace("T", " ")
+            .substring(0, 19)}`,
         });
+      }
+  
+      // Insere a nova reserva no banco de dados
+      const queryInsert = `
+        INSERT INTO reservas (fkid_usuario, fkid_salas, data_reserva, horario_inicio, horario_fim)
+        VALUES (?, ?, ?, ?, ?)
+      `;
+      const values = [id_usuario, fkid_salas, data_reserva_formatada, horario_inicio_formatado, horario_fim_formatado];
+  
+      connect.query(queryInsert, values, (err) => {
+        if (err) {
+          console.error(err);
+          return res.status(500).json({ error: "Erro ao criar a reserva" });
+        }
+        return res.status(201).json({ message: "Reserva criada com sucesso" });
       });
-    });
-  });
-}
+  
+    } catch (error) {
+      console.error(error);
+      return res.status(500).json({ error: "Erro interno do servidor" });
+    }
+  }
+  
+  
 
 
 
 static async getReservas(req, res) {
   const querySelect = `
-    SELECT r.id_reserva, r.fkid_usuario, r.fkid_salas, r.data_hora, r.duracao, u.nome AS usuario_nome, s.nome_da_sala AS sala_nome
+    SELECT r.id_reserva, r.fkid_usuario, r.fkid_salas, r.data_reserva, r.horario_inicio, r.horario_fim, 
+           u.nome AS usuario_nome, s.nome_da_sala AS sala_nome
     FROM reservas r
     INNER JOIN usuario u ON r.fkid_usuario = u.id_usuario
     INNER JOIN salas s ON r.fkid_salas = s.id_salas
@@ -152,14 +108,26 @@ static async getReservas(req, res) {
 
       // Ajustar o horário para o fuso horário do Brasil (UTC-3)
       const reservasFormatadas = results.map(reserva => {
-        if (reserva.data_hora instanceof Date) {
-          // Ajustar a data/hora subtraindo 3 horas
-          const dataHoraAjustada = new Date(reserva.data_hora);
-          dataHoraAjustada.setHours(dataHoraAjustada.getHours() - 3);
-          
-          // Converter para string no formato desejado
-          reserva.data_hora = dataHoraAjustada.toISOString().replace("T", " ").split(".")[0];
+        // Ajuste da data (data_reserva) para o fuso horário
+        if (reserva.data_reserva instanceof Date) {
+          const dataReservaAjustada = new Date(reserva.data_reserva);
+          dataReservaAjustada.setHours(dataReservaAjustada.getHours() - 3);
+          reserva.data_reserva = dataReservaAjustada.toISOString().split("T")[0];
         }
+
+        // Ajustar o horário de início (horario_inicio) e fim (horario_fim) para o fuso horário
+        if (reserva.horario_inicio instanceof Date) {
+          const horarioInicioAjustado = new Date(reserva.horario_inicio);
+          horarioInicioAjustado.setHours(horarioInicioAjustado.getHours() - 3);
+          reserva.horario_inicio = horarioInicioAjustado.toISOString().split("T")[1].split(".")[0];
+        }
+
+        if (reserva.horario_fim instanceof Date) {
+          const horarioFimAjustado = new Date(reserva.horario_fim);
+          horarioFimAjustado.setHours(horarioFimAjustado.getHours() - 3);
+          reserva.horario_fim = horarioFimAjustado.toISOString().split("T")[1].split(".")[0];
+        }
+
         return reserva;
       });
 
@@ -172,6 +140,7 @@ static async getReservas(req, res) {
     return res.status(500).json({ error: "Erro interno do servidor" });
   }
 }
+
   
 
 static async getReservasByUser(req, res) {

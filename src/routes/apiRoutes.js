@@ -17,7 +17,7 @@ router.put('/user', userController.updateUser);
 router.get('/user/:id', userController.getUserById);
 
 // Rotas Para reservaController
-router.post("/reservas", reservaController.createReserva);
+router.post("/reservas", reservaController. createReserva);
 router.get("/reservas", reservaController.getReservas); 
 router.get("/reservas/user/:id_usuario", reservaController.getReservasByUser); // Obter reservas de um usuário específico
 router.put("/reservas", reservaController.updateReserva);

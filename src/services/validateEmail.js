@@ -15,9 +15,9 @@ module.exports = function validateEmail(email, userId = null) {
 
         // Se um userId foi passado (update) e o Email pertence a outro usuário, retorna erro
         if (userId && emailCadastrado !== userId) {
-          return resolve({ error: "Email já cadastrado para outro usuário" });
+          return resolve({ error: "Email já cadastrado por outro usuário" });
         } else if (!userId) {
-          return resolve({ error: "Email já cadastrado" });
+          return resolve({ error: "Email já cadastrado por outro usuário" });
         }
       }
 
