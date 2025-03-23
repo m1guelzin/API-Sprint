@@ -1,20 +1,72 @@
-module.exports = {
-    validateReserva: function ({ fkid_usuario, fkid_salas, data_reserva, horario_inicio, horario_fim }) {
+module.exports = function validateReserva({
+  fkid_usuario,
+  fkid_salas,
+  data_reserva,
+  horario_inicio,
+  horario_fim
+}) {
       // Verificar se todos os campos foram preenchidos
       if (!fkid_usuario || !fkid_salas || !data_reserva || !horario_inicio || !horario_fim) {
         return { error: "Todos os campos devem ser preenchidos" };
       }
   
-      // Validar formato dos valores recebidos
-      if (isNaN(fkid_usuario) || isNaN(fkid_salas)) {
-        return { error: "IDs de usuário e sala devem ser números válidos" };
-      }
-      if (!/^\d{4}-\d{2}-\d{2}$/.test(data_reserva)) {
-        return { error: "Formato da data inválido. Use AAAA-MM-DD" };
-      }
-      if (!/^\d{2}:\d{2}$/.test(horario_inicio) || !/^\d{2}:\d{2}$/.test(horario_fim)) {
-        return { error: "Formato do horário inválido. Use HH:MM" };
-      }
+      const checkUserExists = (fkid_usuario) => {
+        return new Promise((resolve, reject) => {
+          db.query(
+            "SELECT id_usuario FROM usuario WHERE id_usuario = ?",
+            [fkid_usuario],
+            (err, results) => {
+              if (err) return reject({ error: "Erro ao verificar usuário" });
+              if (results.length === 0) return resolve({ error: "Usuário não encontrado" });
+              resolve(null); // Usuário encontrado
+            }
+          );
+        });
+      };
+      
+      // Função para verificar se a sala existe
+      const checkSalaExists = (fkid_salas) => {
+        return new Promise((resolve, reject) => {
+          db.query(
+            "SELECT id_salas FROM salas WHERE id_salas = ?",
+            [fkid_salas],
+            (err, results) => {
+              if (err) return reject({ error: "Erro ao verificar sala" });
+              if (results.length === 0) return resolve({ error: "Sala não encontrada" });
+              resolve(null); // Sala encontrada
+            }
+          );
+        });
+      };
+
+
+          // Validar formato da data (AAAA-MM-DD)
+    const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+    if (!dateRegex.test(data_reserva)) {
+      return { error: "Formato da data inválido. Use AAAA-MM-DD" };
+    }
+
+    // Validar horário de forma mais simples
+    const validateTimeFormat = (time) => {
+      const parts = time.split(":");
+      if (parts.length !== 3) return false; // Deve ter 3 partes (HH, MM, SS)
+
+      const [hours, minutes, seconds] = parts;
+
+      // Verificar se a hora, minuto e segundo são números válidos
+      if (isNaN(hours) || isNaN(minutes) || isNaN(seconds)) return false;
+
+      const h = parseInt(hours);
+      const m = parseInt(minutes);
+      const s = parseInt(seconds);
+
+      // Verificar se a hora está entre 00 e 23, minutos e segundos entre 00 e 59
+      return h >= 0 && h <= 23 && m >= 0 && m <= 59 && s >= 0 && s <= 59;
+    };
+
+    if (!validateTimeFormat(horario_inicio) || !validateTimeFormat(horario_fim)) {
+      return { error: "Formato do horário inválido. Use HH:MM:SS" };
+    }
   
       // Converter horários para objetos Date
       const hoje = new Date().toISOString().split('T')[0]; // Data atual formatada
@@ -44,6 +96,6 @@ module.exports = {
       }
   
       return null; // Retorna null se não houver erro
-    },
+    }
 
-}
+
