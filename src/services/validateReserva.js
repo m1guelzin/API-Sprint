@@ -10,36 +10,6 @@ module.exports = function validateReserva({
         return { error: "Todos os campos devem ser preenchidos" };
       }
   
-      const checkUserExists = (fkid_usuario) => {
-        return new Promise((resolve, reject) => {
-          db.query(
-            "SELECT id_usuario FROM usuario WHERE id_usuario = ?",
-            [fkid_usuario],
-            (err, results) => {
-              if (err) return reject({ error: "Erro ao verificar usuário" });
-              if (results.length === 0) return resolve({ error: "Usuário não encontrado" });
-              resolve(null); // Usuário encontrado
-            }
-          );
-        });
-      };
-      
-      // Função para verificar se a sala existe
-      const checkSalaExists = (fkid_salas) => {
-        return new Promise((resolve, reject) => {
-          db.query(
-            "SELECT id_salas FROM salas WHERE id_salas = ?",
-            [fkid_salas],
-            (err, results) => {
-              if (err) return reject({ error: "Erro ao verificar sala" });
-              if (results.length === 0) return resolve({ error: "Sala não encontrada" });
-              resolve(null); // Sala encontrada
-            }
-          );
-        });
-      };
-
-
           // Validar formato da data (AAAA-MM-DD)
     const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
     if (!dateRegex.test(data_reserva)) {
