@@ -182,7 +182,7 @@ static async getUserById(req, res) {
     return res.status(400).json({ error: "ID do usuário é obrigatório" });
   }
 
-  const query = `SELECT * FROM usuario WHERE id_usuario = ?`; // Ajuste o campo `id` conforme o banco
+  const query = `SELECT * FROM usuario WHERE id_usuario = ?`;
 
   connect.query(query, [userId], function (err, results) {
     if (err) {
@@ -194,18 +194,21 @@ static async getUserById(req, res) {
       return res.status(404).json({ error: "Usuário não encontrado" });
     }
 
+    // Pega o primeiro usuário encontrado
+    const user = results[0];
 
-      return res.status(200).json({
-        user: {
-          id: user.id_usuario,
-          nome: user.nome,
-          email: user.email,
-          telefone: user.telefone,
-          cpf: user.cpf
-        },
-      });
+    return res.status(200).json({
+      user: {
+        id: user.id_usuario,
+        nome: user.nome,
+        email: user.email,
+        telefone: user.telefone,
+        cpf: user.cpf,
+      },
     });
-  };
+  });
+}
+
 };
 
 

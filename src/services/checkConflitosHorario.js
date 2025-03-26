@@ -34,7 +34,7 @@ const checkConflitoHorario = function (fkid_salas, data_reserva, horario_inicio,
 
     connect.query(query, values, (err, results) => {
       if (err) return reject({ error: "Erro ao verificar conflito de horário" });
-      if (results.length > 0) return resolve({ error: "Conflito de horário encontrado" });
+      if (results.length > 0) return resolve({ error: "Conflito de horário. A sala já esta reservada neste dia e horário." });
       resolve(null);
     });
   });

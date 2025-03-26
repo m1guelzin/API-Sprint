@@ -114,146 +114,71 @@ static async getReservas(req, res) {
   }
 }
 
-  
-
 static async getReservasByUser(req, res) {
   const { id_usuario } = req.params;
 
-  // Query para verificar a existência do usuário
   const queryCheckUser = `SELECT id_usuario FROM usuario WHERE id_usuario = ?`;
-  const valuesCheckUser = [id_usuario];
-
-  // Query para buscar reservas do usuário
   const querySelect = `
-    SELECT r.id_reserva, s.nome_da_sala, r.data_hora, r.duracao
+    SELECT 
+      r.id_reserva, 
+      u.nome AS nome_usuario, 
+      s.nome_da_sala, 
+      r.data_reserva, 
+      r.horario_inicio
     FROM reservas r
     INNER JOIN salas s ON r.fkid_salas = s.id_salas
+    INNER JOIN usuario u ON r.fkid_usuario = u.id_usuario
     WHERE r.fkid_usuario = ?
   `;
-  const valuesSelect = [id_usuario];
 
   try {
-    // Verificar se o usuário existe
-    connect.query(queryCheckUser, valuesCheckUser, (err, userResults) => {
-      if (err) {
-        console.error(err);
-        return res.status(500).json({ error: "Erro ao verificar existência do usuário" });
-      }
-
-      if (userResults.length === 0) {
-        return res.status(404).json({ message: "Usuário não encontrado" });
-      }
-
-      // Buscar reservas do usuário
-      connect.query(querySelect, valuesSelect, (err, results) => {
-        if (err) {
-          console.error(err);
-          return res
-            .status(500)
-            .json({ error: "Erro ao buscar reservas do usuário" });
-        }
-
-        // Verificar se o usuário possui reservas
-        if (results.length === 0) {
-          return res.status(404).json({ message: "Nenhuma reserva encontrada para este usuário" });
-        }
-
-        // Formatar data/hora diretamente
-        const reservasFormatadas = results.map(reserva => {
-          if (reserva.data_hora) {
-            // Ajustar o horário para UTC-3 e formatar
-            const dataHora = new Date(reserva.data_hora);
-            dataHora.setHours(dataHora.getHours() - 3);
-            reserva.data_hora = dataHora
-              .toISOString()
-              .replace("T", " ")
-              .split(".")[0]; // Remover milissegundos
-          }
-          return reserva;
-        });
-
-        return res
-          .status(200)
-          .json({ message: "Reservas do usuário", reservas: reservasFormatadas });
+    // Verifica se o usuário existe
+    const userResults = await new Promise((resolve, reject) => {
+      connect.query(queryCheckUser, [id_usuario], (err, results) => {
+        if (err) reject(err);
+        else resolve(results);
       });
     });
+
+    if (userResults.length === 0) {
+      return res.status(404).json({ message: "Usuário não encontrado" });
+    }
+
+    // Busca reservas do usuário
+    const results = await new Promise((resolve, reject) => {
+      connect.query(querySelect, [id_usuario], (err, results) => {
+        if (err) reject(err);
+        else resolve(results);
+      });
+    });
+
+    if (!Array.isArray(results) || results.length === 0) {
+      return res.status(404).json({ message: "Nenhuma reserva encontrada para este usuário" });
+    }
+
+    // Formatar data/hora corretamente
+    const reservasFormatadas = results.map(reserva => ({
+      id_reserva: reserva.id_reserva,
+      nome_usuario: reserva.nome_usuario,
+      nome_da_sala: reserva.nome_da_sala,
+      data_reserva: reserva.data_reserva
+        ? new Date(reserva.data_reserva).toISOString().split("T")[0] // Apenas a data (YYYY-MM-DD)
+        : null,
+      horario_inicio: reserva.horario_inicio
+        ? reserva.horario_inicio.substring(0, 5) // Formatar HH:MM
+        : null,
+    }));
+
+    return res.status(200).json({
+      message: "Reservas do usuário",
+      reservas: reservasFormatadas,
+    });
+
   } catch (error) {
-    console.error(error);
+    console.error("Erro no banco de dados:", error);
     return res.status(500).json({ error: "Erro interno do servidor" });
   }
 }
-
-
-static async updateReserva(req, res) {
-  const { id_reserva } = req.body;
-  const { id_usuario, fkid_salas, data_reserva, horario_inicio, horario_fim } = req.body;
-
-  // Validar os dados recebidos
-  const validationResult = validateReserva({
-    fkid_usuario: id_usuario,
-    fkid_salas,
-    data_reserva,
-    horario_inicio,
-    horario_fim
-  });
-
-  if (validationResult) {
-    return res.status(400).json(validationResult);
-  }
-
-  // Verificar se os IDs do usuário e da sala existem
-  const idValidation = await validateIds(id_usuario, fkid_salas);
-  if (idValidation) {
-    return res.status(400).json(idValidation);
-  }
-
-  try {
-    // Verificar se a reserva existe
-    const reservaExists = await new Promise((resolve, reject) => {
-      connect.query(
-        "SELECT * FROM reservas WHERE id_reserva = ?",
-        [id_reserva],
-        (err, results) => {
-          if (err) return reject(err);
-          resolve(results.length > 0);
-        }
-      );
-    });
-
-    if (!reservaExists) {
-      return res.status(404).json({ error: "Reserva não encontrada" });
-    }
-
-    // Verificar conflito de horário antes de atualizar a reserva
-    const conflito = await checkConflitoHorario(fkid_salas, data_reserva, horario_inicio, horario_fim, id_reserva);
-    if (conflito) {
-      return res.status(400).json(conflito);
-    }
-
-    // Atualizar a reserva no banco de dados
-    const query = `
-      UPDATE reservas
-      SET fkid_usuario = ?, fkid_salas = ?, data_reserva = ?, horario_inicio = ?, horario_fim = ?
-      WHERE id_reserva = ?
-    `;
-
-    const values = [id_usuario, fkid_salas, data_reserva, horario_inicio, horario_fim, id_reserva];
-
-    await new Promise((resolve, reject) => {
-      connect.query(query, values, (err, results) => {
-        if (err) return reject(err);
-        resolve(results);
-      });
-    });
-
-    return res.status(200).json({ message: "Reserva atualizada com sucesso" });
-
-  } catch (error) {
-    console.error(error);
-    return res.status(500).json({ error: "Erro ao atualizar reserva, tente novamente mais tarde." });
-  }
-}
-
 
   static async deleteReserva(req, res) {
     const { id_reserva } = req.params;
