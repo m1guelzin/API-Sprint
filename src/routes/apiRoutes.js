@@ -21,6 +21,7 @@ router.post("/reservas", reservaController. createReserva);
 router.get("/reservas", reservaController.getReservas); 
 router.get("/reservas/user/:id_usuario", reservaController.getReservasByUser); // Obter reservas de um usuário específico
 //router.put("/reservas", reservaController.updateReserva);
+router.get("/por-data/:data", reservaController.getReservasPorData);
 router.delete("/reservas/:id_reserva", reservaController.deleteReserva); 
 
 // Rotas Para salasController

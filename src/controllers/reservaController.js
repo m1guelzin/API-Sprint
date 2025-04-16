@@ -221,4 +221,55 @@ static async getReservasByUser(req, res) {
       }
     });
   }
+
+  //testeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee
+
+  static async getReservasPorData(req, res) {
+    const { data } = req.params; // espera receber a data no formato 'YYYY-MM-DD' pela URL
+  
+    if (!data) {
+      return res.status(400).json({ message: "Data não informada" });
+    }
+  
+    try {
+      const sql = `
+        CALL ListarReservasPorData(?);
+      `;
+  
+      const results = await new Promise((resolve, reject) => {
+        connect.query(sql, [data], (err, results) => {
+          if (err) return reject(err);
+          resolve(results);
+        });
+      });
+  
+      // Como a procedure retorna um SELECT, o resultado vem como um array de arrays.
+      const reservas = results[0];
+  
+      if (reservas.length === 0) {
+        return res.status(404).json({ message: "Nenhuma reserva encontrada para essa data." });
+      }
+  
+      const reservasFormatadas = reservas.map(reserva => ({
+        id_reserva: reserva.id_reserva,
+        nome_usuario: reserva.nome,
+        nome_da_sala: reserva['Sala Reservada'],
+        horario_inicio: reserva.horario_inicio.substring(0, 5), // HH:MM
+        horario_fim: reserva.horario_fim.substring(0, 5),       // HH:MM
+      }));
+  
+      return res.status(200).json({
+        message: "Reservas encontradas para a data",
+        data: data,
+        reservas: reservasFormatadas,
+      });
+  
+    } catch (error) {
+      console.error("Erro ao buscar reservas por data:", error);
+      return res.status(500).json({ error: "Erro interno ao buscar reservas por data." });
+    }
+  }
+  
 };
+
+
