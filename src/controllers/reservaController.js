@@ -253,7 +253,7 @@ static async getReservasByUser(req, res) {
       const reservasFormatadas = reservas.map(reserva => ({
         id_reserva: reserva.id_reserva,
         nome_usuario: reserva.nome,
-        nome_da_sala: reserva['Sala Reservada'],
+        Sala_reservada: reserva['Sala Reservada'],
         horario_inicio: reserva.horario_inicio.substring(0, 5), // HH:MM
         horario_fim: reserva.horario_fim.substring(0, 5),       // HH:MM
       }));

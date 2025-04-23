@@ -16,3 +16,5 @@ BEGIN
 END$$
 
 DELIMITER ;
+
+-- call ListarReservasPorData("2026-03-28");
