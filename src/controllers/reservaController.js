@@ -269,6 +269,60 @@ static async getReservasByUser(req, res) {
       return res.status(500).json({ error: "Erro interno ao buscar reservas por data." });
     }
   }
+  //testeeeeeeeeeeeeeeeeee 2
+  static async getSalasDisponiveis(req, res) {
+    const { data_reserva, horario_inicio, horario_fim } = req.query;
+  
+    if (!data_reserva || !horario_inicio || !horario_fim) {
+      return res.status(400).json({
+        message: "Parâmetros obrigatórios: data_reserva, horario_inicio e horario_fim",
+      });
+    }
+  
+    try {
+      const query = `
+        SELECT * FROM salas
+        WHERE id_salas NOT IN (
+          SELECT fkid_salas FROM reservas
+          WHERE data_reserva = ?
+            AND (
+              (horario_inicio < ? AND horario_fim > ?)  -- Sobreposição
+              OR (horario_inicio < ? AND horario_fim > ?)
+              OR (horario_inicio >= ? AND horario_fim <= ?)
+            )
+        );
+      `;
+  
+      const values = [
+        data_reserva,
+        horario_fim, horario_inicio, // Verifica início sobreposto
+        horario_inicio, horario_fim, // Verifica fim sobreposto
+        horario_inicio, horario_fim  // Verifica intervalo contido
+      ];
+  
+      const salas = await new Promise((resolve, reject) => {
+        connect.query(query, values, (err, results) => {
+          if (err) return reject(err);
+          resolve(results);
+        });
+      });
+  
+      if (salas.length === 0) {
+        return res.status(404).json({ message: "Nenhuma sala disponível para o intervalo informado" });
+      }
+  
+      return res.status(200).json({
+        message: "Salas disponíveis encontradas",
+        data: { data_reserva, horario_inicio, horario_fim },
+        salas_disponiveis: salas
+      });
+  
+    } catch (error) {
+      console.error("Erro ao buscar salas disponíveis:", error);
+      return res.status(500).json({ error: "Erro interno do servidor" });
+    }
+  }
+  
   
 };
 

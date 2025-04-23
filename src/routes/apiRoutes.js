@@ -26,6 +26,7 @@ router.delete("/reservas/:id_reserva", reservaController.deleteReserva);
 
 // Rotas Para salasController
 router.post("/salas", salasController.createSala);
+router.get("/salas/disponiveis", reservaController.getSalasDisponiveis);
 router.get("/salas", salasController.getAllSalas);
 router.put("/salas", salasController.updateSala);
 router.delete("/salas/:id", salasController.deleteSala);
