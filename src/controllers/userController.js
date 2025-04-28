@@ -2,6 +2,7 @@ const connect = require("../db/connect");
 const validateUser = require("../services/validateUser");
 const validateCpf = require("../services/validateCpf");
 const validateEmail = require("../services/validateEmail");
+const jwt = require("jsonwebtoken");
 
 module.exports = class userController {
   static async createUser(req, res) {
@@ -76,14 +77,15 @@ module.exports = class userController {
         }
 
         // Se o CPF e a senha estiverem corretos, login bem-sucedido
-        return res.status(200).json({
-          message: "Login bem-sucedido",
-          user: {
-          id_usuario: user.id_usuario,
-          cpf: user.cpf,
-          nome: user.nome,
-          },
-        });
+        const token = jwt.sign({id: user.id_usuario}, process.env.SECRET, {expiresIn:"1h"});
+
+        //Remove um atributo de um objeto
+        delete user.password;
+
+        return res.status(200).json({message:"Login bem sucedido",
+          user,
+          token
+        })
       });
     } catch (error) {
       console.error(error);
@@ -138,7 +140,14 @@ static async updateUser(req, res) {
         return res.status(500).json({ error: "Erro ao atualizar usuário" });
       }
 
-      return res.status(200).json({ message: "Usuário atualizado com sucesso" });
+      const token = jwt.sign({id: valuesUpdate.id_usuario}, process.env.SECRET, {expiresIn:"1h"});
+
+      //Remove um atributo de um objeto
+      delete valuesUpdate.password;
+
+      return res.status(200).json({message:"Usuario Atualizado com sucesso",
+        valuesUpdate,
+      })
     });
   } catch (error) {
     console.error(error);

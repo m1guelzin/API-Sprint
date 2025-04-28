@@ -1,6 +1,8 @@
 //Importa o modulo Express
 const express = require("express");
 const cors = require("cors");
+require ("dotenv-safe").config();
+const jwt = require ("jsonwebtoken");
 const testConnect = require('./db/testConnect');
 
 
