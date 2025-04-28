@@ -27,8 +27,8 @@ router.delete("/reservas/:id_reserva", reservaController.deleteReserva);
 
 // Rotas Para salasController
 router.post("/salas", salasController.createSala);
-router.get("/salas/horarios-disponiveis/:data", reservaController.getSalasHorariosDisponiveis);
-router.get("/salas/disponiveis/:data", reservaController.getSalasDisponiveisPorData);
+router.get("/salas/horarios-disponiveis/:data", salasController.getSalasHorariosDisponiveis);
+router.get("/salas/disponiveis/:data", salasController.getSalasDisponiveisPorData);
 //router.get("/salas/disponiveis", reservaController.getSalasDisponiveis);
 router.get("/salas", salasController.getAllSalas);
 router.put("/salas", salasController.updateSala);

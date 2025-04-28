@@ -114,6 +114,13 @@ static async getAllUsers(req, res) {
 
 static async updateUser(req, res) {
   const { id_usuario, nome, telefone, email, senha, cpf } = req.body;
+  const userId = id_usuario;
+  const VerificarToken = userId;
+
+  // Aqui você precisa ter certeza que `req.user.id` existe, ou adaptar conforme seu token
+  if (VerificarToken !== userId.id) {
+    return res.status(403).json({ error: "Usuário não autorizado a atualizar este perfil" });
+  }
 
   // Verificar se todos os campos necessários foram preenchidos
   if (!id_usuario || !nome || !telefone || !email || !senha || !cpf) {
@@ -131,29 +138,21 @@ static async updateUser(req, res) {
 
     // Atualizar os dados no banco
     const queryUpdate = `UPDATE usuario SET nome=?, telefone=?, email=?, senha=?, cpf=? WHERE id_usuario = ?`;
-    const valuesUpdate = [nome, telefone, email, senha, cpf, id_usuario]; // A posição estava incorreta antes
+    const valuesUpdate = [nome, telefone, email, senha, cpf, id_usuario];
 
     connect.query(queryUpdate, valuesUpdate, (err, results) => {
-      // Verificação de erro na execução da consulta
       if (err) {
         console.error(err);
         return res.status(500).json({ error: "Erro ao atualizar usuário" });
       }
-
-      const token = jwt.sign({id: valuesUpdate.id_usuario}, process.env.SECRET, {expiresIn:"1h"});
-
-      //Remove um atributo de um objeto
-      delete valuesUpdate.password;
-
-      return res.status(200).json({message:"Usuario Atualizado com sucesso",
-        valuesUpdate,
-      })
+      return res.status(200).json({ message: "Usuário atualizado com sucesso" });
     });
   } catch (error) {
     console.error(error);
     return res.status(500).json({ error: "Erro interno do servidor" });
   }
 }
+
 
 
 static async deleteUser(req, res) {

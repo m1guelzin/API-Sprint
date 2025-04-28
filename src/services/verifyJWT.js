@@ -1,19 +1,25 @@
-const jwt = require ("jsonwebtoken");
+const jwt = require('jsonwebtoken');
+const SECRET = process.env.SECRET 
 
-function verifyJWT(req, res, next){
-    const token = req.headers["authorization"]
+function verifyJWT(req, res, next) {
+  const token = req.headers['authorization'];
 
-    if(!token){
-        return res.status(401).json({auth:false, message:"Token não foi fornecido"})
+  if (!token) {
+    return res.status(401).json({ error: "Token não fornecido" });
+  }
+
+  jwt.verify(token, SECRET, (err, decoded) => {
+    if (err) {
+      return res.status(403).json({ error: "Token inválido" });
     }
+    
+    // Aqui preenche o req.user
+    req.userId = {
+      id: decoded.id, // Pega o id que você salvou quando criou o token
+    };
 
-    jwt.verify(token, process.env.SECRET, (err, decoded)=>{
-        if(err){
-            return res.status(403).json({auth:false, message:"Falha na Autenticação do Token"})
-        }
-        req.userId = decoded.id;
-        next();
-    })  
+    next(); // deixa seguir para o controller
+  });
 }
 
 module.exports = verifyJWT;
