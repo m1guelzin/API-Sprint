@@ -117,12 +117,6 @@ static async getReservas(req, res) {
 
 static async getReservasByUser(req, res) {
   const { id_usuario } = req.params;
-  const userId = req.params.id_usuario; // ID que veio da URL
-  const usuarioId = req.userId.id; // ID do usuário autenticado (via token)
-
-  if (Number(userId) !== Number(usuarioId)) {
-    return res.status(403).json({ error: "Usuário não autorizado a ver informações deste perfil" });
-  }
 
   const queryCheckUser = `SELECT id_usuario FROM usuario WHERE id_usuario = ?`;
   const querySelect = `
@@ -189,13 +183,6 @@ static async getReservasByUser(req, res) {
 
   static async deleteReserva(req, res) {
     const { id_reserva } = req.params;
-    const userId = req.params.id; // ID que veio da URL
-  const usuarioId = req.userId.id; // ID do usuário autenticado (via token)
-
-  // Verifica se o usuário autenticado está tentando deletar outro usuário
-  if (Number(userId) !== Number(usuarioId)) {
-    return res.status(403).json({ error: "Usuário não autorizado a deletar este perfil" });
-  }
 
     // 1. Verificar se a reserva existe
     const queryReserva = `SELECT * FROM reservas WHERE id_reserva = ?`;
