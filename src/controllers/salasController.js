@@ -122,6 +122,8 @@ module.exports = class salasController {
       return res.status(500).json({ error: "Erro interno do servidor" });
     }
   }
+
+  //Get para salas disponiveis naquele dia
   static async getSalasDisponiveisPorData(req, res) {
     const { data } = req.params;
   
@@ -162,6 +164,8 @@ module.exports = class salasController {
         }
         return horarios;
       };
+
+      //Get para horarios disponiveis em cada sala
       const horariosPadrao = gerarHorariosPadrao();
   
       const salasDisponiveis = [];

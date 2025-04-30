@@ -6,6 +6,7 @@ const validateIds = require("../services/validateIds")
 module.exports = class reservaController {
   static async createReserva(req, res) {
     const { id_usuario, fkid_salas, data_reserva, horario_inicio, horario_fim } = req.body;
+    
   
     // Validar os dados recebidos
     const validationResult = validateReserva({
@@ -49,7 +50,7 @@ module.exports = class reservaController {
       });
   
       return res.status(201).json({
-        message: "Reserva criada com sucesso",
+        message: "Reserva criada com Sucesso!!",
         id_reserva: result.insertId
       });
   
@@ -116,6 +117,12 @@ static async getReservas(req, res) {
 
 static async getReservasByUser(req, res) {
   const { id_usuario } = req.params;
+  const userId = req.params.id_usuario; // ID que veio da URL
+  const usuarioId = req.userId.id; // ID do usuário autenticado (via token)
+
+  if (Number(userId) !== Number(usuarioId)) {
+    return res.status(403).json({ error: "Usuário não autorizado a ver informações deste perfil" });
+  }
 
   const queryCheckUser = `SELECT id_usuario FROM usuario WHERE id_usuario = ?`;
   const querySelect = `
@@ -182,6 +189,13 @@ static async getReservasByUser(req, res) {
 
   static async deleteReserva(req, res) {
     const { id_reserva } = req.params;
+    const userId = req.params.id; // ID que veio da URL
+  const usuarioId = req.userId.id; // ID do usuário autenticado (via token)
+
+  // Verifica se o usuário autenticado está tentando deletar outro usuário
+  if (Number(userId) !== Number(usuarioId)) {
+    return res.status(403).json({ error: "Usuário não autorizado a deletar este perfil" });
+  }
 
     // 1. Verificar se a reserva existe
     const queryReserva = `SELECT * FROM reservas WHERE id_reserva = ?`;
@@ -221,57 +235,6 @@ static async getReservasByUser(req, res) {
       }
     });
   }
-
-  //testeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee
-
-  static async getReservasPorData(req, res) {
-    const { data } = req.params; // espera receber a data no formato 'YYYY-MM-DD' pela URL
-  
-    if (!data) {
-      return res.status(400).json({ message: "Data não informada" });
-    }
-  
-    try {
-      const sql = `
-        CALL ListarReservasPorData(?);
-      `;
-  
-      const results = await new Promise((resolve, reject) => {
-        connect.query(sql, [data], (err, results) => {
-          if (err) return reject(err);
-          resolve(results);
-        });
-      });
-  
-      // Como a procedure retorna um SELECT, o resultado vem como um array de arrays.
-      const reservas = results[0];
-  
-      if (reservas.length === 0) {
-        return res.status(404).json({ message: "Nenhuma reserva encontrada para essa data." });
-      }
-  
-      const reservasFormatadas = reservas.map(reserva => ({
-        id_reserva: reserva.id_reserva,
-        nome_usuario: reserva.nome,
-        Sala_reservada: reserva['Sala Reservada'],
-        horario_inicio: reserva.horario_inicio.substring(0, 5), // HH:MM
-        horario_fim: reserva.horario_fim.substring(0, 5),       // HH:MM
-      }));
-  
-      return res.status(200).json({
-        message: "Reservas encontradas para a data",
-        data: data,
-        reservas: reservasFormatadas,
-      });
-  
-    } catch (error) {
-      console.error("Erro ao buscar reservas por data:", error);
-      return res.status(500).json({ error: "Erro interno ao buscar reservas por data." });
-    }
-  }
-
-
-
 };
 
 

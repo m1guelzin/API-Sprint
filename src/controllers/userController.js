@@ -118,7 +118,7 @@ static async updateUser(req, res) {
   const VerificarToken = userId;
 
   // Aqui você precisa ter certeza que `req.user.id` existe, ou adaptar conforme seu token
-  if (VerificarToken !== userId.id) {
+  if (VerificarToken !== req.userId.id) {
     return res.status(403).json({ error: "Usuário não autorizado a atualizar este perfil" });
   }
 
@@ -156,7 +156,14 @@ static async updateUser(req, res) {
 
 
 static async deleteUser(req, res) {
-  const userId = req.params.id;
+  const userId = req.params.id; // ID que veio da URL
+  const usuarioId = req.userId.id; // ID do usuário autenticado (via token)
+
+  // Verifica se o usuário autenticado está tentando deletar outro usuário
+  if (Number(userId) !== Number(usuarioId)) {
+    return res.status(403).json({ error: "Usuário não autorizado a deletar este perfil" });
+  }
+  
   const queryDelete = `DELETE FROM usuario WHERE id_usuario=?`;
   const values = [userId];
 
@@ -184,7 +191,12 @@ static async deleteUser(req, res) {
 
 
 static async getUserById(req, res) {
-  const userId = req.params.id;
+  const userId = req.params.id; // ID que veio da URL
+  const usuarioId = req.userId.id; // ID do usuário autenticado (via token)
+
+  if (Number(userId) !== Number(usuarioId)) {
+    return res.status(403).json({ error: "Usuário não autorizado a ver informações deste perfil" });
+  }
 
   if (!userId) {
     return res.status(400).json({ error: "ID do usuário é obrigatório" });

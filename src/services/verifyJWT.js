@@ -13,7 +13,7 @@ function verifyJWT(req, res, next) {
       return res.status(403).json({ error: "Token inválido" });
     }
     
-    // Aqui preenche o req.user
+    // Aqui preenche o userId
     req.userId = {
       id: decoded.id, // Pega o id que você salvou quando criou o token
     };
