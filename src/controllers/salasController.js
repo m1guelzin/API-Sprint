@@ -126,24 +126,24 @@ module.exports = class salasController {
   //Get para salas disponiveis naquele dia
   static async getSalasDisponiveisPorData(req, res) {
     const { data } = req.params;
-  
+
     if (!data) {
       return res.status(400).json({ message: "Data não informada" });
     }
-  
+
     try {
-      const queryTodasSalas = `SELECT id_salas, nome_da_sala FROM salas`;
+      const queryTodasSalas = `SELECT id_salas, nome_da_sala, capacidade, localizacao, equipamentos FROM salas`;
       const salas = await new Promise((resolve, reject) => {
         connect.query(queryTodasSalas, (err, results) => {
           if (err) return reject(err);
           resolve(results);
         });
       });
-  
+
       if (salas.length === 0) {
         return res.status(404).json({ message: "Nenhuma sala cadastrada" });
       }
-  
+
       const queryReservasDia = `
         SELECT fkid_salas, horario_inicio
         FROM reservas
@@ -155,7 +155,7 @@ module.exports = class salasController {
           resolve(results);
         });
       });
-  
+
       const gerarHorariosPadrao = () => {
         const horarios = [];
         for (let hora = 7; hora < 23; hora++) {
@@ -164,42 +164,46 @@ module.exports = class salasController {
         }
         return horarios;
       };
-
-      //Get para horarios disponiveis em cada sala
       const horariosPadrao = gerarHorariosPadrao();
-  
+
       const salasDisponiveis = [];
       for (const sala of salas) {
         const reservasDaSala = reservas.filter(reserva => reserva.fkid_salas === sala.id_salas)
           .map(reserva => reserva.horario_inicio);
-  
+
         // Verifica se há algum horário padrão que NÃO está nas reservas da sala
         const temHorarioDisponivel = horariosPadrao.some(horarioPadrao =>
           !reservasDaSala.includes(horarioPadrao)
         );
-  
+
         if (temHorarioDisponivel) {
-          salasDisponiveis.push({ id_salas: sala.id_salas, nome_da_sala: sala.nome_da_sala });
+          salasDisponiveis.push({
+            id_salas: sala.id_salas,
+            nome_da_sala: sala.nome_da_sala,
+            capacidade: sala.capacidade,
+            localizacao: sala.localizacao,
+            equipamentos: sala.equipamentos
+          });
         }
       }
-  
+
       if (salasDisponiveis.length === 0) {
         return res.status(404).json({ message: "Nenhuma sala disponível para reserva nessa data" });
       }
-  
+
       return res.status(200).json({
         message: "Salas disponíveis para reserva",
         data: data,
         salas_disponiveis: salasDisponiveis,
       });
-  
+
     } catch (error) {
       console.error("Erro ao buscar salas disponíveis:", error);
       return res.status(500).json({ error: "Erro interno ao buscar salas disponíveis" });
     }
-  }
+  } 
 
-  
+  //Horarios disponiveis naquela sala em um dia especifico  
   static async getSalasHorariosDisponiveis(req, res) {
     const { data } = req.params;
   
