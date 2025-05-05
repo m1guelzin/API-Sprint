@@ -191,12 +191,7 @@ static async deleteUser(req, res) {
 
 
 static async getUserById(req, res) {
-  const userId = req.params.id; // ID que veio da URL
-  const usuarioId = req.userId.id; // ID do usuário autenticado (via token)
-
-  if (Number(userId) !== Number(usuarioId)) {
-    return res.status(403).json({ error: "Usuário não autorizado a ver informações deste perfil" });
-  }
+  const userId = req.params.id_usuario; // ID que veio da URL
 
   if (!userId) {
     return res.status(400).json({ error: "ID do usuário é obrigatório" });

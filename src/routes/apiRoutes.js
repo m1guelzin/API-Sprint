@@ -14,7 +14,7 @@ router.post('/login', userController.loginUser);
 router.delete('/user/:id', verifyJWT, userController.deleteUser);
 router.get('/user', verifyJWT, userController.getAllUsers);
 router.put('/user', verifyJWT, userController.updateUser);
-router.get('/user/:id', verifyJWT, userController.getUserById);
+router.get('/user/:id_usuario', userController.getUserById);
 
 // Rotas Para reservaController
 router.post("/reservas", reservaController. createReserva);
