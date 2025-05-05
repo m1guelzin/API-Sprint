@@ -12,7 +12,7 @@ router.post('/user', userController.createUser);
 router.post('/login', userController.loginUser);
 // Rotas alternativas da CONTROLLER DE USUARIOS
 router.delete('/user/:id', verifyJWT, userController.deleteUser);
-router.get('/user', verifyJWT, userController.getAllUsers);
+router.get('/user', userController.getAllUsers);
 router.put('/user', verifyJWT, userController.updateUser);
 router.get('/user/:id_usuario', userController.getUserById);
 
