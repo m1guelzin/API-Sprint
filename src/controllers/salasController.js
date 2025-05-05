@@ -167,17 +167,17 @@ module.exports = class salasController {
       const horariosPadrao = gerarHorariosPadrao();
 
       const salasDisponiveis = [];
-      for (const sala of salas) {
-        const reservasDaSala = reservas.filter(reserva => reserva.fkid_salas === sala.id_salas)
-          .map(reserva => reserva.horario_inicio);
+      for (const sala of salas) { //faz um loop sobre todas as salas (BCD salas)
+        const reservasDaSala = reservas.filter(reserva => reserva.fkid_salas === sala.id_salas) //filtra as reservas de cada sala
+          .map(reserva => reserva.horario_inicio); // mapeamento para extrair apenas os horários de início das reservas
 
         // Verifica se há algum horário padrão que NÃO está nas reservas da sala
         const temHorarioDisponivel = horariosPadrao.some(horarioPadrao =>
           !reservasDaSala.includes(horarioPadrao)
-        );
+        );//verifica se ao menos 1 horario nao esta reservado
 
         if (temHorarioDisponivel) {
-          salasDisponiveis.push({
+          salasDisponiveis.push({ //para inserir uma nova sala que esteja ao menos com um horario disponivel
             id_salas: sala.id_salas,
             nome_da_sala: sala.nome_da_sala,
             capacidade: sala.capacidade,
