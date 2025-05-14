@@ -2,6 +2,7 @@ const connect = require("../db/connect");
 const validateReserva = require("../services/validateReserva");
 const checkConflitoHorario = require("../services/checkConflitosHorario");
 const validateIds = require("../services/validateIds")
+const reservaService = require("../services/reservaService")
 
 module.exports = class reservaController {
   static async createReserva(req, res) {
@@ -118,55 +119,33 @@ static async getReservas(req, res) {
 static async getReservasByUser(req, res) {
   const { id_usuario } = req.params;
 
-  const queryCheckUser = `SELECT id_usuario FROM usuario WHERE id_usuario = ?`;
-  const querySelect = `
-    SELECT 
-      r.id_reserva, 
-      u.nome AS nome_usuario, 
-      s.nome_da_sala, 
-      r.data_reserva, 
-      r.horario_inicio
-    FROM reservas r
-    INNER JOIN salas s ON r.fkid_salas = s.id_salas
-    INNER JOIN usuario u ON r.fkid_usuario = u.id_usuario
-    WHERE r.fkid_usuario = ?
-  `;
-
   try {
-    // Verifica se o usuário existe
-    const userResults = await new Promise((resolve, reject) => {
-      connect.query(queryCheckUser, [id_usuario], (err, results) => {
-        if (err) reject(err);
-        else resolve(results);
-      });
-    });
-
-    if (userResults.length === 0) {
+    // Verifica se o usuário existe usando o service
+    const usuarioExiste = await reservaService.verificarUsuarioExistente(id_usuario);
+    if (!usuarioExiste) {
       return res.status(404).json({ message: "Usuário não encontrado" });
     }
 
-    // Busca reservas do usuário
-    const results = await new Promise((resolve, reject) => {
-      connect.query(querySelect, [id_usuario], (err, results) => {
-        if (err) reject(err);
-        else resolve(results);
-      });
-    });
+    // Busca as reservas do usuário usando o service
+    const reservas = await reservaService.listarReservasPorUsuario(id_usuario);
 
-    if (!Array.isArray(results) || results.length === 0) {
+    if (reservas.length === 0) {
       return res.status(404).json({ message: "Nenhuma reserva encontrada para este usuário" });
     }
 
-    // Formatar data/hora corretamente
-    const reservasFormatadas = results.map(reserva => ({
+    // Formatar data/hora corretamente (mantendo a lógica de formatação)
+    const reservasFormatadas = reservas.map(reserva => ({
       id_reserva: reserva.id_reserva,
-      nome_usuario: reserva.nome_usuario,
+      nome_usuario: reserva.nome,
       nome_da_sala: reserva.nome_da_sala,
       data_reserva: reserva.data_reserva
-        ? new Date(reserva.data_reserva).toISOString().split("T")[0] // Apenas a data (YYYY-MM-DD)
+        ? new Date(reserva.data_reserva).toISOString().split("T")[0]
         : null,
       horario_inicio: reserva.horario_inicio
-        ? reserva.horario_inicio.substring(0, 5) // Formatar HH:MM
+        ? reserva.horario_inicio.substring(0, 5)
+        : null,
+      horario_fim: reserva.horario_fim
+        ? reserva.horario_fim.substring(0, 5)
         : null,
     }));
 
@@ -176,9 +155,9 @@ static async getReservasByUser(req, res) {
     });
 
   } catch (error) {
-    console.error("Erro no banco de dados:", error);
+    console.error("Erro no controller:", error);
     return res.status(500).json({ error: "Erro interno do servidor" });
-  }
+}
 }
 
   static async deleteReserva(req, res) {

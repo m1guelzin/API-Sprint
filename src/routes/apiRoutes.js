@@ -17,15 +17,15 @@ router.put('/user', verifyJWT, userController.updateUser);
 router.get('/user/:id_usuario', userController.getUserById);
 
 // Rotas Para reservaController
-router.post("/reservas", reservaController. createReserva);
+router.post("/reservas",verifyJWT, reservaController. createReserva);
 router.get("/reservas", reservaController.getReservas); 
-router.get("/reservas/user/:id_usuario",  reservaController.getReservasByUser); // Obter reservas de um usuário específico
-router.delete("/reservas/:id_reserva",  reservaController.deleteReserva); 
+router.get("/reservas/user/:id_usuario",verifyJWT,reservaController.getReservasByUser);
+router.delete("/reservas/:id_reserva",verifyJWT, reservaController.deleteReserva); 
 
 // Rotas Para salasController
 router.post("/salas", salasController.createSala);
-router.get("/salas/horarios-disponiveis/:data", salasController.getSalasHorariosDisponiveis);
-router.get("/salas/disponiveis/:data", salasController.getSalasDisponiveisPorData);
+router.get("/salas/horarios-disponiveis/:data",verifyJWT, salasController.getSalasHorariosDisponiveis);
+router.get("/salas/disponiveis/:data",verifyJWT, salasController.getSalasDisponiveisPorData);
 router.get("/salas", salasController.getAllSalas);
 router.put("/salas", salasController.updateSala);
 router.delete("/salas/:id", salasController.deleteSala);
