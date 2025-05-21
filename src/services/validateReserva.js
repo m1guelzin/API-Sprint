@@ -1,3 +1,5 @@
+const db = require("../db/connect");
+
 module.exports = function validateReserva({
   fkid_usuario,
   fkid_salas,

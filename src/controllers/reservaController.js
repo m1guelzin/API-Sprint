@@ -1,7 +1,7 @@
 const connect = require("../db/connect");
 const validateReserva = require("../services/validateReserva");
 const checkConflitoHorario = require("../services/checkConflitosHorario");
-const validateIds = require("../services/validateIds")
+const {validateIds} = require("../services/validateIds")
 const reservaService = require("../services/reservaService")
 
 module.exports = class reservaController {
@@ -18,14 +18,14 @@ module.exports = class reservaController {
       horario_fim
     });
 
+
+    if (validationResult) {
+      return res.status(400).json(validationResult);
+    }
+
     const idValidation = await validateIds(id_usuario, fkid_salas);
     if (idValidation) {
       return res.status(400).json(idValidation);
-    }
-
-  
-    if (validationResult) {
-      return res.status(400).json(validationResult);
     }
   
     try {
