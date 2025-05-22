@@ -47,5 +47,5 @@ const validateIds = async (fkid_usuario, fkid_salas) => {
 
 module.exports = {
   checkUserExists,
-  validateIds
+  validateIds,
 };

@@ -121,43 +121,48 @@ static async getReservasByUser(req, res) {
 
   try {
     // Verifica se o usuário existe usando o service
-    const usuarioExiste = await reservaService.verificarUsuarioExistente(id_usuario);
+    const usuarioExiste = await reservaService.verificarUsuarioExistente(
+      id_usuario
+    );
     if (!usuarioExiste) {
       return res.status(404).json({ message: "Usuário não encontrado" });
     }
 
     // Busca as reservas do usuário usando o service
-    const reservas = await reservaService.listarReservasPorUsuario(id_usuario);
+    const reservas = await reservaService.listarReservasPorUsuario(
+      id_usuario
+    );
 
-    if (reservas.length === 0) {
-      return res.status(404).json({ message: "Nenhuma reserva encontrada para este usuário" });
+    if (reservas.length === 0) { 
+      return res
+        .status(404)
+        .json({ message: "Nenhuma reserva encontrada para este usuário" });
     }
 
     // Formatar data/hora corretamente (mantendo a lógica de formatação)
-    const reservasFormatadas = reservas.map(reserva => ({
-      id_reserva: reserva.id_reserva,
-      nome_usuario: reserva.nome,
-      nome_da_sala: reserva.nome_da_sala,
-      data_reserva: reserva.data_reserva
-        ? new Date(reserva.data_reserva).toISOString().split("T")[0]
-        : null,
-      horario_inicio: reserva.horario_inicio
-        ? reserva.horario_inicio.substring(0, 5)
-        : null,
-      horario_fim: reserva.horario_fim
-        ? reserva.horario_fim.substring(0, 5)
-        : null,
-    }));
+      const reservasFormatadas = reservas.map((reserva) => ({
+        id_reserva: reserva.id_reserva,
+        nome_usuario: reserva.nome,
+        nome_da_sala: reserva.nome_da_sala,
+        data_reserva: reserva.data_reserva
+          ? new Date(reserva.data_reserva).toISOString().split("T")[0]
+          : null,
+        horario_inicio: reserva.horario_inicio
+          ? reserva.horario_inicio.substring(0, 5)
+          : null,
+        horario_fim: reserva.horario_fim
+          ? reserva.horario_fim.substring(0, 5)
+          : null,
+      }));
 
     return res.status(200).json({
       message: "Reservas do usuário",
       reservas: reservasFormatadas,
     });
-
   } catch (error) {
     console.error("Erro no controller:", error);
     return res.status(500).json({ error: "Erro interno do servidor" });
-}
+  }
 }
 
   static async deleteReserva(req, res) {
