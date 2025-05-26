@@ -117,43 +117,51 @@ module.exports = class userController {
   static async updateUser(req, res) {
     const { id_usuario, nome, telefone, email, senha, cpf } = req.body;
     const userAuthId = req.userId.id; // ID do usuário autenticado pelo token
-
+  
+    // 1. Verificação de Autorização
     if (id_usuario !== userAuthId) {
       return res
         .status(403)
         .json({ error: "Usuário não autorizado a atualizar este perfil" });
     }
-    // Verificar se todos os campos necessários foram preenchidos
+  
+    // 2. Validação de Campos Obrigatórios
+    // É importante validar se todos os campos necessários foram preenchidos
     if (!id_usuario || !nome || !telefone || !email || !senha || !cpf) {
       return res
         .status(400)
         .json({ error: "Todos os campos devem ser preenchidos" });
     }
-
+  
     try {
-      // Validar se CPF já está cadastrado para outro usuário
-      const cpfError = await validateCpf(cpf, id_usuario);
-      if (cpfError) return res.status(400).json(cpfError);
-
-      // Validar se Email já está cadastrado para outro usuário
       const emailError = await validateEmail(email, id_usuario);
       if (emailError) return res.status(400).json(emailError);
-
-      // Atualizar os dados no banco
+  
+      // 4. Consulta de Atualização no Banco de Dados
       const queryUpdate = `UPDATE usuario SET nome=?, telefone=?, email=?, senha=?, cpf=? WHERE id_usuario = ?`;
       const valuesUpdate = [nome, telefone, email, senha, cpf, id_usuario];
-
+  
+      // Executa a query no banco de dados
       connect.query(queryUpdate, valuesUpdate, (err, results) => {
         if (err) {
-          console.error(err);
+          console.error("Erro na atualização do usuário:", err);
+
+          // Verifica se o erro é o específico da sua trigger
+          if (err.sqlState === '45000') {
+            // Se for o erro da trigger, retorna um status 400 (Bad Request)
+            return res.status(400).json({ error: err.message });
+          }
+          // Para qualquer outro erro de banco de dados, retorna um erro genérico 500
           return res.status(500).json({ error: "Erro ao atualizar usuário" });
         }
+        // Se não houver erro, a atualização foi bem-sucedida
         return res
           .status(200)
           .json({ message: "Usuário atualizado com sucesso" });
       });
     } catch (error) {
-      console.error(error);
+      // Captura erros inesperados na lógica da API
+      console.error("Erro interno do servidor ao atualizar usuário:", error);
       return res.status(500).json({ error: "Erro interno do servidor" });
     }
   }

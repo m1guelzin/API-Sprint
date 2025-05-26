@@ -1,8 +1,8 @@
--- MySQL dump 10.13  Distrib 8.0.41, for Win64 (x86_64)
+-- MySQL dump 10.13  Distrib 8.0.36, for Win64 (x86_64)
 --
 -- Host: localhost    Database: senai
 -- ------------------------------------------------------
--- Server version	8.0.41
+-- Server version	8.0.36
 
 /*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
 /*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
@@ -102,6 +102,26 @@ LOCK TABLES `usuario` WRITE;
 INSERT INTO `usuario` VALUES (1,'12345678901','João Silva','11987654321','joao.silva@email.com','senha123'),(2,'23456789012','Maria Oliveira','11976543210','maria.oliveira@email.com','senha456'),(3,'34567890123','Carlos Santos','11965432109','carlos.santos@email.com','senha789'),(4,'45678901234','Ana Souza','11954321098','ana.souza@email.com','senha321'),(5,'56789012345','Pedro Lima','11943210987','pedro.lima@email.com','senha654'),(6,'12345678909','a','12345678909','a@a','123');
 /*!40000 ALTER TABLE `usuario` ENABLE KEYS */;
 UNLOCK TABLES;
+/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
+/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
+/*!50003 SET @saved_col_connection = @@collation_connection */ ;
+/*!50003 SET character_set_client  = utf8mb4 */ ;
+/*!50003 SET character_set_results = utf8mb4 */ ;
+/*!50003 SET collation_connection  = utf8mb4_0900_ai_ci */ ;
+/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
+/*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
+DELIMITER ;;
+/*!50003 CREATE*/ /*!50017 */ /*!50003 TRIGGER `impedir_alteracao_cpf` BEFORE UPDATE ON `usuario` FOR EACH ROW begin
+    if old.cpf <> new.cpf then
+        signal sqlstate '45000'
+        set message_text = 'Não é permitido alterar o CPF de um usuário já cadastrado';
+    end if;
+end */;;
+DELIMITER ;
+/*!50003 SET sql_mode              = @saved_sql_mode */ ;
+/*!50003 SET character_set_client  = @saved_cs_client */ ;
+/*!50003 SET character_set_results = @saved_cs_results */ ;
+/*!50003 SET collation_connection  = @saved_col_connection */ ;
 
 --
 -- Dumping events for database 'senai'
@@ -120,7 +140,7 @@ UNLOCK TABLES;
 /*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
 /*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
 DELIMITER ;;
-CREATE DEFINER=`alunods`@`%` FUNCTION `total_reservas_por_sala`(idSala INT) RETURNS int
+CREATE FUNCTION `total_reservas_por_sala`(idSala INT) RETURNS int
     READS SQL DATA
     DETERMINISTIC
 BEGIN
@@ -147,7 +167,7 @@ DELIMITER ;
 /*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
 /*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
 DELIMITER ;;
-CREATE DEFINER=`alunods`@`%` PROCEDURE `ListarReservasPorData`(IN p_data DATE)
+CREATE PROCEDURE `ListarReservasPorData`(IN p_data DATE)
 BEGIN
   SELECT 
   r.id_reserva, 
@@ -176,7 +196,7 @@ DELIMITER ;
 /*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
 /*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
 DELIMITER ;;
-CREATE PROCEDURE `ListarReservasPorUsuario`(IN p_id_usuario INT)
+CREATE DEFINER=`root`@`localhost` PROCEDURE `ListarReservasPorUsuario`(IN p_id_usuario INT)
 BEGIN
   SELECT
     r.id_reserva,
@@ -206,4 +226,4 @@ DELIMITER ;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2025-05-21 17:17:20
+-- Dump completed on 2025-05-26 14:05:53

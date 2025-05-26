@@ -16,10 +16,10 @@ RUN npm install
 # Vamos ignorar a node_modules (.dockerignore)
 COPY . .
 
-# Container ficará ouvindo os acessos na porta 5000
+# Container ficará ouvindo os acessos na porta 3000
 EXPOSE 3000
 
 # Executa o comando para iniciar o script que está no package.json
 CMD npm start
 
-# docker exec -it 20c940095efac33bbd67492ad32606b4b59b846aa40935c9f1e8862546d490af mysql -u root -p
+# docker exec -it f6521ff90a294c5271807d9577b38c4c2c7ba2a52f251891c52e8f6baef09993 mysql -u root -p
