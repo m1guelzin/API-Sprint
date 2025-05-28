@@ -22,4 +22,4 @@ EXPOSE 3000
 # Executa o comando para iniciar o script que está no package.json
 CMD npm start
 
-# docker exec -it f6521ff90a294c5271807d9577b38c4c2c7ba2a52f251891c52e8f6baef09993 mysql -u root -p
+# docker exec -it e38a12e2944684237f8e60e92f4c98892c858a3f03475010445c6f171f8d4fad mysql -u root -p

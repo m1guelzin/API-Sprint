@@ -46,6 +46,104 @@ LOCK TABLES `reservas` WRITE;
 INSERT INTO `reservas` VALUES (1,5,20,'2026-03-28','19:00:00','20:00:00'),(2,1,10,'2026-03-28','19:00:00','20:00:00'),(3,3,10,'2026-03-28','14:00:00','15:00:00'),(4,3,12,'2026-03-28','14:00:00','15:00:00'),(5,1,15,'2026-03-28','14:00:00','15:00:00'),(6,1,5,'2026-03-28','14:00:00','15:00:00'),(7,5,5,'2026-03-28','19:00:00','20:00:00'),(8,5,5,'2025-04-28','19:00:00','20:00:00');
 /*!40000 ALTER TABLE `reservas` ENABLE KEYS */;
 UNLOCK TABLES;
+/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
+/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
+/*!50003 SET @saved_col_connection = @@collation_connection */ ;
+/*!50003 SET character_set_client  = utf8mb4 */ ;
+/*!50003 SET character_set_results = utf8mb4 */ ;
+/*!50003 SET collation_connection  = utf8mb4_0900_ai_ci */ ;
+/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
+/*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
+DELIMITER ;;
+/*!50003 CREATE*/ /*!50017 DEFINER=`root`@`localhost`*/ /*!50003 TRIGGER `log_reserva_criada` AFTER INSERT ON `reservas` FOR EACH ROW BEGIN
+    INSERT INTO reservas_log (
+        id_reserva,
+        fkid_usuario_reserva,
+        fkid_salas,
+        data_reserva,
+        horario_inicio,
+        horario_fim,
+        tipo_evento
+    )
+    VALUES (
+        NEW.id_reserva,
+        NEW.fkid_usuario, -- O fkid_usuario é o dono da reserva e quem a criou
+        NEW.fkid_salas,
+        NEW.data_reserva,
+        NEW.horario_inicio,
+        NEW.horario_fim,
+        'CRIACAO'
+    );
+END */;;
+DELIMITER ;
+/*!50003 SET sql_mode              = @saved_sql_mode */ ;
+/*!50003 SET character_set_client  = @saved_cs_client */ ;
+/*!50003 SET character_set_results = @saved_cs_results */ ;
+/*!50003 SET collation_connection  = @saved_col_connection */ ;
+/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
+/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
+/*!50003 SET @saved_col_connection = @@collation_connection */ ;
+/*!50003 SET character_set_client  = utf8mb4 */ ;
+/*!50003 SET character_set_results = utf8mb4 */ ;
+/*!50003 SET collation_connection  = utf8mb4_0900_ai_ci */ ;
+/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
+/*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
+DELIMITER ;;
+/*!50003 CREATE*/ /*!50017 DEFINER=`root`@`localhost`*/ /*!50003 TRIGGER `log_reserva_deletada` AFTER DELETE ON `reservas` FOR EACH ROW BEGIN
+    INSERT INTO reservas_log (
+        id_reserva,
+        fkid_usuario_reserva,
+        fkid_salas,
+        data_reserva,
+        horario_inicio,
+        horario_fim,
+        tipo_evento
+    )
+    VALUES (
+        OLD.id_reserva,
+        OLD.fkid_usuario, -- O fkid_usuario é o dono da reserva e quem a deletou
+        OLD.fkid_salas,
+        OLD.data_reserva,
+        OLD.horario_inicio,
+        OLD.horario_fim,
+        'EXCLUSAO'
+    );
+END */;;
+DELIMITER ;
+/*!50003 SET sql_mode              = @saved_sql_mode */ ;
+/*!50003 SET character_set_client  = @saved_cs_client */ ;
+/*!50003 SET character_set_results = @saved_cs_results */ ;
+/*!50003 SET collation_connection  = @saved_col_connection */ ;
+
+--
+-- Table structure for table `reservas_log`
+--
+
+DROP TABLE IF EXISTS `reservas_log`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `reservas_log` (
+  `id_log` int NOT NULL AUTO_INCREMENT,
+  `id_reserva` int NOT NULL,
+  `fkid_usuario_reserva` int NOT NULL,
+  `fkid_salas` int NOT NULL,
+  `data_reserva` date NOT NULL,
+  `horario_inicio` time NOT NULL,
+  `horario_fim` time NOT NULL,
+  `data_evento` datetime DEFAULT CURRENT_TIMESTAMP,
+  `tipo_evento` enum('CRIACAO','EXCLUSAO') NOT NULL,
+  PRIMARY KEY (`id_log`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `reservas_log`
+--
+
+LOCK TABLES `reservas_log` WRITE;
+/*!40000 ALTER TABLE `reservas_log` DISABLE KEYS */;
+/*!40000 ALTER TABLE `reservas_log` ENABLE KEYS */;
+UNLOCK TABLES;
 
 --
 -- Table structure for table `salas`
@@ -111,7 +209,7 @@ UNLOCK TABLES;
 /*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
 /*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
 DELIMITER ;;
-/*!50003 CREATE*/ /*!50017 */ /*!50003 TRIGGER `impedir_alteracao_cpf` BEFORE UPDATE ON `usuario` FOR EACH ROW begin
+/*!50003 CREATE*/ /*!50017 DEFINER=`root`@`localhost`*/ /*!50003 TRIGGER `impedir_alteracao_cpf` BEFORE UPDATE ON `usuario` FOR EACH ROW begin
     if old.cpf <> new.cpf then
         signal sqlstate '45000'
         set message_text = 'Não é permitido alterar o CPF de um usuário já cadastrado';
@@ -140,7 +238,7 @@ DELIMITER ;
 /*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
 /*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
 DELIMITER ;;
-CREATE FUNCTION `total_reservas_por_sala`(idSala INT) RETURNS int
+CREATE DEFINER=`root`@`localhost` FUNCTION `total_reservas_por_sala`(idSala INT) RETURNS int
     READS SQL DATA
     DETERMINISTIC
 BEGIN
@@ -167,7 +265,7 @@ DELIMITER ;
 /*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
 /*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
 DELIMITER ;;
-CREATE PROCEDURE `ListarReservasPorData`(IN p_data DATE)
+CREATE DEFINER=`root`@`localhost` PROCEDURE `ListarReservasPorData`(IN p_data DATE)
 BEGIN
   SELECT 
   r.id_reserva, 
@@ -226,4 +324,4 @@ DELIMITER ;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2025-05-26 14:05:53
+-- Dump completed on 2025-05-28  8:56:48
