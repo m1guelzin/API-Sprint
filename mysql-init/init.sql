@@ -1,3 +1,5 @@
+CREATE DATABASE  IF NOT EXISTS `senai` /*!40100 DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci */ /*!80016 DEFAULT ENCRYPTION='N' */;
+USE `senai`;
 -- MySQL dump 10.13  Distrib 8.0.36, for Win64 (x86_64)
 --
 -- Host: localhost    Database: senai
@@ -34,7 +36,7 @@ CREATE TABLE `reservas` (
   KEY `idx_reserva_usuario` (`fkid_usuario`),
   CONSTRAINT `reservas_ibfk_1` FOREIGN KEY (`fkid_usuario`) REFERENCES `usuario` (`id_usuario`),
   CONSTRAINT `reservas_ibfk_2` FOREIGN KEY (`fkid_salas`) REFERENCES `salas` (`id_salas`)
-) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=35 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -43,7 +45,7 @@ CREATE TABLE `reservas` (
 
 LOCK TABLES `reservas` WRITE;
 /*!40000 ALTER TABLE `reservas` DISABLE KEYS */;
-INSERT INTO `reservas` VALUES (1,5,20,'2026-03-28','19:00:00','20:00:00'),(2,1,10,'2026-03-28','19:00:00','20:00:00'),(3,3,10,'2026-03-28','14:00:00','15:00:00'),(4,3,12,'2026-03-28','14:00:00','15:00:00'),(5,1,15,'2026-03-28','14:00:00','15:00:00'),(6,1,5,'2026-03-28','14:00:00','15:00:00'),(7,5,5,'2026-03-28','19:00:00','20:00:00'),(8,5,5,'2025-04-28','19:00:00','20:00:00');
+INSERT INTO `reservas` VALUES (1,5,20,'2026-03-28','19:00:00','20:00:00'),(2,1,10,'2026-03-28','19:00:00','20:00:00'),(3,3,10,'2026-03-28','14:00:00','15:00:00'),(4,3,12,'2026-03-28','14:00:00','15:00:00'),(5,1,15,'2026-03-28','14:00:00','15:00:00'),(6,1,5,'2026-03-28','14:00:00','15:00:00'),(7,5,5,'2026-03-28','19:00:00','20:00:00');
 /*!40000 ALTER TABLE `reservas` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!50003 SET @saved_cs_client      = @@character_set_client */ ;
@@ -133,7 +135,7 @@ CREATE TABLE `reservas_log` (
   `data_evento` datetime DEFAULT CURRENT_TIMESTAMP,
   `tipo_evento` enum('CRIACAO','EXCLUSAO') NOT NULL,
   PRIMARY KEY (`id_log`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=46 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -142,6 +144,7 @@ CREATE TABLE `reservas_log` (
 
 LOCK TABLES `reservas_log` WRITE;
 /*!40000 ALTER TABLE `reservas_log` DISABLE KEYS */;
+INSERT INTO `reservas_log` VALUES (1,2,2,102,'2025-01-25','14:00:00','15:30:00','2025-01-25 14:00:00','CRIACAO'),(2,1,1,101,'2023-05-20','10:00:00','11:00:00','2025-06-02 10:43:25','EXCLUSAO'),(5,15,1,1,'2024-03-01','09:00:00','10:00:00','2025-06-02 14:22:02','CRIACAO'),(6,16,2,1,'2024-03-01','14:00:00','15:30:00','2025-06-02 14:22:02','CRIACAO'),(7,17,3,2,'2024-03-02','10:30:00','12:00:00','2025-06-02 14:22:02','CRIACAO'),(8,18,1,2,'2024-03-02','16:00:00','17:00:00','2025-06-02 14:22:02','CRIACAO'),(9,19,4,3,'2024-03-03','08:00:00','09:30:00','2025-06-02 14:22:02','CRIACAO'),(10,20,2,3,'2024-03-03','11:00:00','12:00:00','2025-06-02 14:22:02','CRIACAO'),(11,21,5,4,'2024-03-04','13:00:00','14:30:00','2025-06-02 14:22:02','CRIACAO'),(12,22,3,4,'2024-03-04','15:00:00','16:00:00','2025-06-02 14:22:02','CRIACAO'),(13,23,1,5,'2024-03-05','09:30:00','11:00:00','2025-06-02 14:22:02','CRIACAO'),(14,24,4,5,'2024-03-05','14:00:00','15:00:00','2025-06-02 14:22:02','CRIACAO'),(15,25,2,6,'2024-03-06','10:00:00','11:30:00','2025-06-02 14:22:02','CRIACAO'),(16,26,5,6,'2024-03-06','16:30:00','17:30:00','2025-06-02 14:22:02','CRIACAO'),(17,27,3,7,'2024-03-07','08:30:00','09:30:00','2025-06-02 14:22:02','CRIACAO'),(18,28,1,7,'2024-03-07','12:00:00','13:00:00','2025-06-02 14:22:02','CRIACAO'),(19,29,4,8,'2024-03-08','11:00:00','12:30:00','2025-06-02 14:22:02','CRIACAO'),(20,30,2,8,'2024-03-08','14:00:00','15:00:00','2025-06-02 14:22:02','CRIACAO'),(21,31,5,9,'2024-03-09','09:00:00','10:00:00','2025-06-02 14:22:02','CRIACAO'),(22,32,3,9,'2024-03-09','15:00:00','16:30:00','2025-06-02 14:22:02','CRIACAO'),(23,33,1,10,'2024-03-10','10:00:00','11:00:00','2025-06-02 14:22:02','CRIACAO'),(24,34,4,10,'2024-03-10','13:30:00','14:30:00','2025-06-02 14:22:03','CRIACAO'),(25,8,5,5,'2025-04-28','19:00:00','20:00:00','2025-06-02 14:22:31','EXCLUSAO'),(26,15,1,1,'2024-03-01','09:00:00','10:00:00','2025-06-02 14:22:31','EXCLUSAO'),(27,16,2,1,'2024-03-01','14:00:00','15:30:00','2025-06-02 14:22:31','EXCLUSAO'),(28,17,3,2,'2024-03-02','10:30:00','12:00:00','2025-06-02 14:22:31','EXCLUSAO'),(29,18,1,2,'2024-03-02','16:00:00','17:00:00','2025-06-02 14:22:31','EXCLUSAO'),(30,19,4,3,'2024-03-03','08:00:00','09:30:00','2025-06-02 14:22:31','EXCLUSAO'),(31,20,2,3,'2024-03-03','11:00:00','12:00:00','2025-06-02 14:22:31','EXCLUSAO'),(32,21,5,4,'2024-03-04','13:00:00','14:30:00','2025-06-02 14:22:31','EXCLUSAO'),(33,22,3,4,'2024-03-04','15:00:00','16:00:00','2025-06-02 14:22:31','EXCLUSAO'),(34,23,1,5,'2024-03-05','09:30:00','11:00:00','2025-06-02 14:22:31','EXCLUSAO'),(35,24,4,5,'2024-03-05','14:00:00','15:00:00','2025-06-02 14:22:31','EXCLUSAO'),(36,25,2,6,'2024-03-06','10:00:00','11:30:00','2025-06-02 14:22:31','EXCLUSAO'),(37,26,5,6,'2024-03-06','16:30:00','17:30:00','2025-06-02 14:22:31','EXCLUSAO'),(38,27,3,7,'2024-03-07','08:30:00','09:30:00','2025-06-02 14:22:31','EXCLUSAO'),(39,28,1,7,'2024-03-07','12:00:00','13:00:00','2025-06-02 14:22:31','EXCLUSAO'),(40,29,4,8,'2024-03-08','11:00:00','12:30:00','2025-06-02 14:22:31','EXCLUSAO'),(41,30,2,8,'2024-03-08','14:00:00','15:00:00','2025-06-02 14:22:31','EXCLUSAO'),(42,31,5,9,'2024-03-09','09:00:00','10:00:00','2025-06-02 14:22:31','EXCLUSAO'),(43,32,3,9,'2024-03-09','15:00:00','16:30:00','2025-06-02 14:22:31','EXCLUSAO'),(44,33,1,10,'2024-03-10','10:00:00','11:00:00','2025-06-02 14:22:31','EXCLUSAO'),(45,34,4,10,'2024-03-10','13:30:00','14:30:00','2025-06-02 14:22:31','EXCLUSAO');
 /*!40000 ALTER TABLE `reservas_log` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -224,6 +227,47 @@ DELIMITER ;
 --
 -- Dumping events for database 'senai'
 --
+/*!50106 SET @save_time_zone= @@TIME_ZONE */ ;
+/*!50106 DROP EVENT IF EXISTS `excluir_logs_antigos` */;
+DELIMITER ;;
+/*!50003 SET @saved_cs_client      = @@character_set_client */ ;;
+/*!50003 SET @saved_cs_results     = @@character_set_results */ ;;
+/*!50003 SET @saved_col_connection = @@collation_connection */ ;;
+/*!50003 SET character_set_client  = utf8mb4 */ ;;
+/*!50003 SET character_set_results = utf8mb4 */ ;;
+/*!50003 SET collation_connection  = utf8mb4_0900_ai_ci */ ;;
+/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;;
+/*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;;
+/*!50003 SET @saved_time_zone      = @@time_zone */ ;;
+/*!50003 SET time_zone             = 'SYSTEM' */ ;;
+/*!50106 CREATE*/ /*!50117 DEFINER=`alunods`@`%`*/ /*!50106 EVENT `excluir_logs_antigos` ON SCHEDULE EVERY 1 MONTH STARTS '2025-06-02 10:49:08' ON COMPLETION PRESERVE ENABLE DO DELETE FROM reservas_log
+    WHERE data_evento <= NOW() - INTERVAL 1 YEAR */ ;;
+/*!50003 SET time_zone             = @saved_time_zone */ ;;
+/*!50003 SET sql_mode              = @saved_sql_mode */ ;;
+/*!50003 SET character_set_client  = @saved_cs_client */ ;;
+/*!50003 SET character_set_results = @saved_cs_results */ ;;
+/*!50003 SET collation_connection  = @saved_col_connection */ ;;
+/*!50106 DROP EVENT IF EXISTS `excluir_reservas_antigas` */;;
+DELIMITER ;;
+/*!50003 SET @saved_cs_client      = @@character_set_client */ ;;
+/*!50003 SET @saved_cs_results     = @@character_set_results */ ;;
+/*!50003 SET @saved_col_connection = @@collation_connection */ ;;
+/*!50003 SET character_set_client  = utf8mb4 */ ;;
+/*!50003 SET character_set_results = utf8mb4 */ ;;
+/*!50003 SET collation_connection  = utf8mb4_0900_ai_ci */ ;;
+/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;;
+/*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;;
+/*!50003 SET @saved_time_zone      = @@time_zone */ ;;
+/*!50003 SET time_zone             = 'SYSTEM' */ ;;
+/*!50106 CREATE*/ /*!50117 DEFINER=`alunods`@`%`*/ /*!50106 EVENT `excluir_reservas_antigas` ON SCHEDULE EVERY 1 DAY STARTS '2025-06-02 14:22:31' ON COMPLETION PRESERVE ENABLE DO DELETE FROM reservas
+    WHERE CONCAT(data_reserva, ' ', horario_fim) <= NOW() */ ;;
+/*!50003 SET time_zone             = @saved_time_zone */ ;;
+/*!50003 SET sql_mode              = @saved_sql_mode */ ;;
+/*!50003 SET character_set_client  = @saved_cs_client */ ;;
+/*!50003 SET character_set_results = @saved_cs_results */ ;;
+/*!50003 SET collation_connection  = @saved_col_connection */ ;;
+DELIMITER ;
+/*!50106 SET TIME_ZONE= @save_time_zone */ ;
 
 --
 -- Dumping routines for database 'senai'
@@ -324,4 +368,4 @@ DELIMITER ;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2025-05-28  8:56:48
+-- Dump completed on 2025-06-02 16:27:49
