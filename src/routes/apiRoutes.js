@@ -14,7 +14,7 @@ router.post('/login', userController.loginUser);
 router.delete('/user/:id', verifyJWT, userController.deleteUser);
 router.get('/user', userController.getAllUsers);
 router.put('/user', verifyJWT, userController.updateUser);
-router.get('/user/:id_usuario', userController.getUserById);
+router.get('/user/:id_usuario',verifyJWT, userController.getUserById);
 
 // Rotas Para reservaController
 router.post("/reservas",verifyJWT, reservaController. createReserva);
@@ -26,7 +26,7 @@ router.delete("/reservas/:id_reserva",verifyJWT, reservaController.deleteReserva
 router.post("/salas", salasController.createSala);
 router.get("/salas/horarios-disponiveis/:data",verifyJWT, salasController.getSalasHorariosDisponiveis);
 router.get("/salas/disponiveis/:data",verifyJWT, salasController.getSalasDisponiveisPorData);
-router.get("/salas", salasController.getAllSalas);
+router.get("/salas",verifyJWT, salasController.getAllSalas);
 router.put("/salas", salasController.updateSala);
 router.delete("/salas/:id", salasController.deleteSala);
 

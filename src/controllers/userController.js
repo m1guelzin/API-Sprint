@@ -189,7 +189,7 @@ module.exports = class userController {
             return res
               .status(400)
               .json({
-                error: "Impossível deletar conta. Reservas relacionadas.",
+                error: "Não é possivel deletar sua conta. É necessario cancelar todas as suas Reservas.",
               });
           }
           console.error("Erro ao deletar usuário:", err);
