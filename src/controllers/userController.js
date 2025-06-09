@@ -3,9 +3,8 @@ const validateUser = require("../services/validateUser");
 const validateCpf = require("../services/validateCpf");
 const validateEmail = require("../services/validateEmail");
 const jwt = require("jsonwebtoken");
-const bcrypt = require("bcrypt")
-const SALT_ROUNDS = 10;
-
+const bcrypt = require("bcrypt"); // Já importado
+const SALT_ROUNDS = 10; // Já definido
 
 module.exports = class userController {
   static async createUser(req, res) {
@@ -26,7 +25,7 @@ module.exports = class userController {
       const emailError = await validateEmail(email);
       if (emailError) return res.status(400).json(emailError);
 
-      const hashedSenha = await bcrypt.hash(senha, SALT_ROUNDS)
+      const hashedSenha = await bcrypt.hash(senha, SALT_ROUNDS);
 
       // Insere o usuário no banco de dados
       const queryInsert = `INSERT INTO usuario (cpf, nome, telefone, email, senha) VALUES (?, ?, ?, ?, ?)`;
@@ -54,18 +53,18 @@ module.exports = class userController {
     // Validações básicas
     if (!cpf || !senha) {
       return res.status(400).json({ error: "CPF e senha são obrigatórios" });
-    } else if (isNaN(cpf) || cpf.length !== 11) {
+    } else if (isNaN(cpf) || String(cpf).length !== 11) { // Convertendo para string para verificar length
       return res.status(400).json({
         error: "CPF inválido. Deve conter exatamente 11 dígitos numéricos",
       });
     }
 
-    // Query para verificar se o usuário existe com o CPF fornecido
-    const queryLogin = `SELECT * FROM usuario WHERE cpf = '${cpf}'`;
+    // --- MODIFICADO: Query para verificar se o usuário existe com o CPF fornecido (usando parâmetro para segurança) ---
+    const queryLogin = `SELECT * FROM usuario WHERE cpf = ?`;
 
     try {
-      // Executando a query
-      connect.query(queryLogin, function (err, results) {
+      // Executando a query (agora com parâmetro)
+      connect.query(queryLogin, [cpf], async function (err, results) { // Adicionado 'async' para usar 'await'
         if (err) {
           console.error(err);
           return res.status(500).json({ error: "Erro interno do servidor" });
@@ -77,9 +76,8 @@ module.exports = class userController {
 
         const user = results[0];
 
-
-        const senhaOK = bcrypt.compareSync(senha,user.senha)
-        // Verificação da senha
+        // --- MODIFICADO: Verificação da senha com bcrypt.compare ---
+        const senhaOK = await bcrypt.compare(senha, user.senha); // Usando await aqui
         if (!senhaOK) {
           return res.status(401).json({ error: "Senha incorreta" });
         }
@@ -89,8 +87,8 @@ module.exports = class userController {
           expiresIn: "1h",
         });
 
-        //Remove um atributo de um objeto
-        delete user.password;
+        // --- MODIFICADO: Remove o campo 'senha' do objeto user antes de enviá-lo para o frontend ---
+        delete user.senha; // O nome do campo no DB é 'senha', não 'password'
 
         return res
           .status(200)
@@ -124,40 +122,66 @@ module.exports = class userController {
   static async updateUser(req, res) {
     const { id_usuario, nome, telefone, email, senha, cpf } = req.body;
     const userAuthId = req.userId.id; // ID do usuário autenticado pelo token
-  
+
     // 1. Verificação de Autorização
-    if (id_usuario !== userAuthId) {
+    // --- MODIFICADO: Comparar como string para evitar problemas de tipo ---
+    if (String(id_usuario) !== String(userAuthId)) {
       return res
         .status(403)
         .json({ error: "Usuário não autorizado a atualizar este perfil" });
     }
-  
-    // 2. Validação de Campos Obrigatórios
-    // É importante validar se todos os campos necessários foram preenchidos
-    if (!id_usuario || !nome || !telefone || !email || !senha || !cpf) {
+
+    // 2. Validação de Campos Obrigatórios (Exceto Senha)
+    // --- MODIFICADO: A senha agora é opcional para atualização ---
+    if (!id_usuario || !nome || !telefone || !email || !cpf) {
       return res
         .status(400)
-        .json({ error: "Todos os campos devem ser preenchidos" });
+        .json({ error: "Os campos nome, telefone, email e cpf são obrigatórios." });
     }
-  
+
     try {
       const emailError = await validateEmail(email, id_usuario);
       if (emailError) return res.status(400).json(emailError);
-  
-      const hashedSenha = await bcrypt.hash(senha, SALT_ROUNDS)
 
-      // 4. Consulta de Atualização no Banco de Dados
-      const queryUpdate = `UPDATE usuario SET nome=?, telefone=?, email=?, senha=?, cpf=? WHERE id_usuario = ?`;
-      const valuesUpdate = [nome, telefone, email, hashedSenha, cpf, id_usuario];
-  
+      // --- Adicionado/Modificado: Preparação da Query de Atualização Dinâmica ---
+      let queryParts = []; // Armazenará partes da query SET
+      let values = [];     // Armazenará os valores correspondentes
+
+      // Adiciona campos que SEMPRE serão atualizados
+      queryParts.push("nome=?");
+      values.push(nome);
+
+      queryParts.push("telefone=?");
+      values.push(telefone);
+
+      queryParts.push("email=?");
+      values.push(email);
+
+      queryParts.push("cpf=?");
+      values.push(cpf);
+
+      // Verifica se a senha foi fornecida E TEM UM VALOR REAL para ser atualizada
+      // typeof senha === 'string' é uma verificação de segurança adicional
+      if (senha && typeof senha === 'string' && senha.trim() !== "") {
+        const hashedSenha = await bcrypt.hash(senha, SALT_ROUNDS); // Hashing da nova senha
+        queryParts.push("senha=?");
+        values.push(hashedSenha); // Usa a senha HASHADA aqui
+      }
+
+      // Monta a query final
+      const queryUpdate = `UPDATE usuario SET ${queryParts.join(', ')} WHERE id_usuario = ?`;
+      values.push(id_usuario); // Adiciona o id_usuario no final dos valores
+
+      console.log("Query de atualização:", queryUpdate);
+      console.log("Valores para atualização:", values);
+
       // Executa a query no banco de dados
-      connect.query(queryUpdate, valuesUpdate, (err, results) => {
+      connect.query(queryUpdate, values, (err, results) => {
         if (err) {
           console.error("Erro na atualização do usuário:", err);
 
-          // Verifica se o erro é o específico da sua trigger
+          // Verifica se o erro é o específico da sua trigger (ex: email duplicado)
           if (err.sqlState === '45000') {
-            // Se for o erro da trigger, retorna um status 400 (Bad Request)
             return res.status(400).json({ error: err.message });
           }
           // Para qualquer outro erro de banco de dados, retorna um erro genérico 500
@@ -169,7 +193,7 @@ module.exports = class userController {
           .json({ message: "Usuário atualizado com sucesso" });
       });
     } catch (error) {
-      // Captura erros inesperados na lógica da API
+      // Captura erros inesperados na lógica da API (ex: erro no validateEmail, bcrypt.hash)
       console.error("Erro interno do servidor ao atualizar usuário:", error);
       return res.status(500).json({ error: "Erro interno do servidor" });
     }
@@ -180,7 +204,8 @@ module.exports = class userController {
     const userAuthId = req.userId.id; // ID do usuário autenticado pelo token
 
     // Verifica se o usuário autenticado está tentando deletar outro usuário
-    if (userId !== userAuthId) {
+    // --- MODIFICADO: Comparar como string para evitar problemas de tipo ---
+    if (String(userId) !== String(userAuthId)) {
       return res
         .status(403)
         .json({ error: "Usuário não autorizado a deletar este perfil" });
@@ -238,6 +263,9 @@ module.exports = class userController {
 
       // Pega o primeiro usuário encontrado
       const user = results[0];
+
+      // --- Adicionado: Não retorna a senha (mesmo que hashada) para o frontend ---
+      delete user.senha; 
 
       return res.status(200).json({
         user: {
