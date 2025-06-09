@@ -3,6 +3,9 @@ const validateUser = require("../services/validateUser");
 const validateCpf = require("../services/validateCpf");
 const validateEmail = require("../services/validateEmail");
 const jwt = require("jsonwebtoken");
+const bcrypt = require("bcrypt")
+const SALT_ROUNDS = 10;
+
 
 module.exports = class userController {
   static async createUser(req, res) {
@@ -23,9 +26,11 @@ module.exports = class userController {
       const emailError = await validateEmail(email);
       if (emailError) return res.status(400).json(emailError);
 
+      const hashedSenha = await bcrypt.hash(senha, SALT_ROUNDS)
+
       // Insere o usuário no banco de dados
       const queryInsert = `INSERT INTO usuario (cpf, nome, telefone, email, senha) VALUES (?, ?, ?, ?, ?)`;
-      const values = [cpf, nome, telefone, email, senha];
+      const values = [cpf, nome, telefone, email, hashedSenha];
 
       connect.query(queryInsert, values, (err) => {
         if (err) {
@@ -72,8 +77,10 @@ module.exports = class userController {
 
         const user = results[0];
 
+
+        const senhaOK = bcrypt.compareSync(senha,user.senha)
         // Verificação da senha
-        if (user.senha !== senha) {
+        if (!senhaOK) {
           return res.status(401).json({ error: "Senha incorreta" });
         }
 
@@ -137,9 +144,11 @@ module.exports = class userController {
       const emailError = await validateEmail(email, id_usuario);
       if (emailError) return res.status(400).json(emailError);
   
+      const hashedSenha = await bcrypt.hash(senha, SALT_ROUNDS)
+
       // 4. Consulta de Atualização no Banco de Dados
       const queryUpdate = `UPDATE usuario SET nome=?, telefone=?, email=?, senha=?, cpf=? WHERE id_usuario = ?`;
-      const valuesUpdate = [nome, telefone, email, senha, cpf, id_usuario];
+      const valuesUpdate = [nome, telefone, email, hashedSenha, cpf, id_usuario];
   
       // Executa a query no banco de dados
       connect.query(queryUpdate, valuesUpdate, (err, results) => {
@@ -167,7 +176,7 @@ module.exports = class userController {
   }
 
   static async deleteUser(req, res) {
-    const userId = req.params.id; // ID que veio da URL
+    const userId = parseInt(req.params.id); // converter para número
     const userAuthId = req.userId.id; // ID do usuário autenticado pelo token
 
     // Verifica se o usuário autenticado está tentando deletar outro usuário
