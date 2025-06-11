@@ -1,7 +1,7 @@
 CREATE EVENT IF NOT EXISTS `excluir_reservas_antigas`
-ON SCHEDULE EVERY 1 DAY -- O evento será executado a cada 1 dia
-STARTS CURRENT_TIMESTAMP -- O evento começa a partir de agora
-ON COMPLETION PRESERVE -- O evento não será deletado após sua execução
+ON SCHEDULE EVERY 1 DAY
+STARTS CURRENT_TIMESTAMP
+ON COMPLETION PRESERVE
 ENABLE -- O evento estará ativo
 DO
     DELETE FROM reservas

@@ -1,0 +1,10 @@
+CREATE TABLE usuarios_log (
+    id_log INT AUTO_INCREMENT PRIMARY KEY,
+    id_usuario_afetado INT NOT NULL,
+    cpf VARCHAR(11) NOT NULL,
+    nome VARCHAR(255) NOT NULL,
+    email VARCHAR(255) NOT NULL,
+    senha VARCHAR(255) NOT NULL,
+    data_evento DATETIME DEFAULT CURRENT_TIMESTAMP,
+    tipo_evento ENUM('CRIACAO', 'EXCLUSAO', 'ATUALIZACAO') NOT NULL
+);

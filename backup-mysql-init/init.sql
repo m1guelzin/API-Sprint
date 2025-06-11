@@ -212,38 +212,6 @@ UNLOCK TABLES;
 /*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
 /*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
 DELIMITER ;;
-/*!50003 CREATE*/ /*!50003 TRIGGER `trg_after_insert_usuario` AFTER INSERT ON `usuario` FOR EACH ROW BEGIN
-    INSERT INTO usuarios_log (
-        id_usuario_afetado,
-        cpf,
-        nome,
-        email,
-        senha,
-        tipo_evento
-    )
-    VALUES (
-        NEW.id_usuario,
-        NEW.cpf,
-        NEW.nome,
-        NEW.email,
-        NEW.senha,
-        'CRIACAO'
-    );
-END */;;
-DELIMITER ;
-/*!50003 SET sql_mode              = @saved_sql_mode */ ;
-/*!50003 SET character_set_client  = @saved_cs_client */ ;
-/*!50003 SET character_set_results = @saved_cs_results */ ;
-/*!50003 SET collation_connection  = @saved_col_connection */ ;
-/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
-/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
-/*!50003 SET @saved_col_connection = @@collation_connection */ ;
-/*!50003 SET character_set_client  = utf8mb4 */ ;
-/*!50003 SET character_set_results = utf8mb4 */ ;
-/*!50003 SET collation_connection  = utf8mb4_0900_ai_ci */ ;
-/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
-/*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
-DELIMITER ;;
 /*!50003 CREATE*/ /*!50003 TRIGGER `impedir_alteracao_cpf` BEFORE UPDATE ON `usuario` FOR EACH ROW begin
     if old.cpf <> new.cpf then
         signal sqlstate '45000'
@@ -255,106 +223,6 @@ DELIMITER ;
 /*!50003 SET character_set_client  = @saved_cs_client */ ;
 /*!50003 SET character_set_results = @saved_cs_results */ ;
 /*!50003 SET collation_connection  = @saved_col_connection */ ;
-/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
-/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
-/*!50003 SET @saved_col_connection = @@collation_connection */ ;
-/*!50003 SET character_set_client  = utf8mb4 */ ;
-/*!50003 SET character_set_results = utf8mb4 */ ;
-/*!50003 SET collation_connection  = utf8mb4_0900_ai_ci */ ;
-/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
-/*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
-DELIMITER ;;
-/*!50003 CREATE*/ /*!50003 TRIGGER `trg_after_update_usuario` AFTER UPDATE ON `usuario` FOR EACH ROW BEGIN
-    -- Só insere no log se houver alguma mudança nos campos relevantes, incluindo a senha
-    IF OLD.cpf <> NEW.cpf OR
-       OLD.nome <> NEW.nome OR
-       OLD.telefone <> NEW.telefone OR
-       OLD.email <> NEW.email OR
-       OLD.senha <> NEW.senha THEN -- Se a senha (hash) for alterada
-        INSERT INTO usuarios_log (
-            id_usuario_afetado,
-            cpf,
-            nome,
-            email,
-            senha, -- Adicionando a senha (hash)
-            tipo_evento
-        )
-        VALUES (
-            NEW.id_usuario,
-            NEW.cpf,
-            NEW.nome,
-            NEW.email,
-            NEW.senha, -- Capturando a hash da senha após a atualização
-            'ATUALIZACAO'
-        );
-    END IF;
-END */;;
-DELIMITER ;
-/*!50003 SET sql_mode              = @saved_sql_mode */ ;
-/*!50003 SET character_set_client  = @saved_cs_client */ ;
-/*!50003 SET character_set_results = @saved_cs_results */ ;
-/*!50003 SET collation_connection  = @saved_col_connection */ ;
-/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
-/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
-/*!50003 SET @saved_col_connection = @@collation_connection */ ;
-/*!50003 SET character_set_client  = utf8mb4 */ ;
-/*!50003 SET character_set_results = utf8mb4 */ ;
-/*!50003 SET collation_connection  = utf8mb4_0900_ai_ci */ ;
-/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
-/*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
-DELIMITER ;;
-/*!50003 CREATE*/ /*!50003 TRIGGER `trg_before_delete_usuario` BEFORE DELETE ON `usuario` FOR EACH ROW BEGIN
-    INSERT INTO usuarios_log (
-        id_usuario_afetado,
-        cpf,
-        nome,
-        email,
-        senha, -- Adicionando a senha (hash)
-        tipo_evento
-    )
-    VALUES (
-        OLD.id_usuario,
-        OLD.cpf,
-        OLD.nome,
-        OLD.email,
-        OLD.senha, -- Capturando a hash da senha do registro que está sendo excluído
-        'EXCLUSAO'
-    );
-END */;;
-DELIMITER ;
-/*!50003 SET sql_mode              = @saved_sql_mode */ ;
-/*!50003 SET character_set_client  = @saved_cs_client */ ;
-/*!50003 SET character_set_results = @saved_cs_results */ ;
-/*!50003 SET collation_connection  = @saved_col_connection */ ;
-
---
--- Table structure for table `usuarios_log`
---
-
-DROP TABLE IF EXISTS `usuarios_log`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `usuarios_log` (
-  `id_log` int NOT NULL AUTO_INCREMENT,
-  `id_usuario_afetado` int NOT NULL,
-  `cpf` varchar(11) NOT NULL,
-  `nome` varchar(255) NOT NULL,
-  `email` varchar(255) NOT NULL,
-  `senha` varchar(255) NOT NULL,
-  `data_evento` datetime DEFAULT CURRENT_TIMESTAMP,
-  `tipo_evento` enum('CRIACAO','EXCLUSAO','ATUALIZACAO') NOT NULL,
-  PRIMARY KEY (`id_log`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `usuarios_log`
---
-
-LOCK TABLES `usuarios_log` WRITE;
-/*!40000 ALTER TABLE `usuarios_log` DISABLE KEYS */;
-/*!40000 ALTER TABLE `usuarios_log` ENABLE KEYS */;
-UNLOCK TABLES;
 
 --
 -- Dumping events for database 'senai'
@@ -494,10 +362,10 @@ DELIMITER ;
 
 /*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
 /*!40014 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS */;
-/*!40014 SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS */;
+/*!40014 SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS */; 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
 /*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2025-06-11 10:17:11
+-- Dump completed on 2025-06-02 16:27:49
