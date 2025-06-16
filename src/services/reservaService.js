@@ -5,7 +5,7 @@ const reservaService = {
   async listarReservasPorUsuario(idUsuario) {
     const queryCallProcedure = `CALL ListarReservasPorUsuario(?)`;
     try {
-      // MODIFICAÇÃO AQUI: Acessar o primeiro elemento do array de resultados da procedure
+      // Acessar o primeiro elemento do array de resultados da procedure
       const [results] = await connect.promise().query(queryCallProcedure, [
         idUsuario,
       ]);

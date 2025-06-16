@@ -32,10 +32,7 @@ module.exports = class userController {
       const values = [cpf, nome, telefone, email, hashedSenha];
 
       connect.query(queryInsert, values, (err) => {
-        if (err.sqlState === "22001") {
-          return res.status(400).json({ error: "Erro ao Cadastrar, O telefone deve conter somente 11 digitos " });
-        }
-        else if (err) {
+         if (err) {
           console.error(err);
           return res.status(500).json({ error: "Erro ao cadastrar usuário" });
         }

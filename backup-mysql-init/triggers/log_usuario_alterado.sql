@@ -3,7 +3,6 @@ CREATE TRIGGER trg_after_update_usuario
 AFTER UPDATE ON usuario
 FOR EACH ROW
 BEGIN
-    -- Só insere no log se houver alguma mudança nos campos relevantes, incluindo a senha
     IF OLD.cpf <> NEW.cpf OR
        OLD.nome <> NEW.nome OR
        OLD.telefone <> NEW.telefone OR
@@ -14,7 +13,7 @@ BEGIN
             cpf,
             nome,
             email,
-            senha, -- Adicionando a senha (hash)
+            senha,
             tipo_evento
         )
         VALUES (
@@ -22,7 +21,7 @@ BEGIN
             NEW.cpf,
             NEW.nome,
             NEW.email,
-            NEW.senha, -- Capturando a hash da senha após a atualização
+            NEW.senha,
             'ATUALIZACAO'
         );
     END IF;
