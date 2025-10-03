@@ -30,9 +30,7 @@ URL Base `/project-senai/api/v1`
 
 - Servidor MySQL rodando.
 
-1. Setup e Instalação Configurar o Banco de Dados:
-
-O schema e dados iniciais do banco estão no arquivo mysql-init/init.sql.
+1. Setup e Instalação Configurar o Banco de Dados: O schema e dados iniciais do banco estão no arquivo mysql-init/init.sql.
 
 2. Crie o banco de dados e importe o conteúdo desse arquivo.
 
@@ -88,6 +86,4 @@ ___
 Email: miguelgarridodev@gmail.com
 
 LinkedIn: www.linkedin.com/in/miguel-garrido-dev
-## 🚀 Sobre mim
-Eu sou uma pessoa desenvolvedora full-stack...
 
